@@ -10,7 +10,7 @@ public enum ErrorApp {
     USERNAME_NOT_EXISTED("Username is not exist", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_LOGIN),
     PASSWORD_INCORRECT("Password is incorrect", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
     USERNAME_INVALID("Username must be at least 5 characters", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
-    PASSWORD_INVALID("Password must be at least 8 charactes", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
+    PASSWORD_INVALID("Password must be at least 8 characters", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
     FULLNAME_INVALID("Full name is required", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
     EMAIL_INVALID("Email should be valid", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
     USERNAME_EXISTED("User name existed", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REGISTER),
@@ -26,7 +26,16 @@ public enum ErrorApp {
 
     CATEGORY_NAME_EMPTY("Category's name is not null", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CATEGORY),
     CATEGORY_NOT_FOUND("Category not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CATEGORY),
-    CATEGORY_NAME_EXISTED("Category's name is existed", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CATEGORY)
+    CATEGORY_NAME_EXISTED("Category's name is existed", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CATEGORY),
+
+    PRODUCT_NAME_NOT_BLANK("Product's name is not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+    PRODUCT_SKU_NOT_BLANK("SKU is not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+    PRODUCT_STOCK_NOT_NULL("STOCK is not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+    PRODUCT_NAME_EXISTED("Product's name existed", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+    PRODUCT_STOCK_MIN_0("Product's stock must be at least 0", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+    PRODUCT_NOT_FOUND("Product not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
+
+
     ;
 
 
