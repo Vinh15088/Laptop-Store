@@ -9,6 +9,7 @@ import com.LaptopWeb.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,6 +22,8 @@ public class CategoryService {
     private CategoryMapper categoryMapper;
 
     public Category getCategoryById(Integer categoryId) {
+        System.out.println(categoryRepository.findById(categoryId));
+
         return categoryRepository.findById(categoryId).orElseThrow(() ->
                 new AppException(ErrorApp.CATEGORY_NOT_FOUND));
     }
@@ -68,6 +71,18 @@ public class CategoryService {
         }
 
         return  categoryRepository.save(category);
+    }
+
+    public List<Category> getCategory() {
+        List<Category> categories = getAll();
+
+        List<Category> results = new ArrayList<>();
+
+        for(Category category:categories) {
+            if(category.getParent() == null) results.add(category);
+        }
+
+        return results;
     }
 
 

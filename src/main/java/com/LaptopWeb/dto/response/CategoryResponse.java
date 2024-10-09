@@ -1,13 +1,10 @@
 package com.LaptopWeb.dto.response;
 
-import com.LaptopWeb.entity.Category;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
-import java.util.Set;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)

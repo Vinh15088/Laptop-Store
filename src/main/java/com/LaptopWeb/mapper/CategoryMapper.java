@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
-    @Mapping(target = "children", ignore = true)
+//    @Mapping(target = "parent", ignore = true)
     Category toCategory(CategoryRequest request);
 
-    @Mapping(target = "children", expression = "java(buildChildren(category))")
     @Mapping(target = "parent_id", expression = "java(buildParentId(category))")
+    @Mapping(target = "children", expression = "java(buildChildren(category))")
     CategoryResponse toCategoryResponse(Category category);
 
     default List<CategoryResponse> buildChildren(Category category) {

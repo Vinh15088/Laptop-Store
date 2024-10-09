@@ -37,6 +37,33 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    @GetMapping
+    public ResponseEntity<?> getCategory(@RequestParam(name="name", required = false) String name) {
+        if(name != null) {
+            Category category = categoryService.getByName(name);
+
+            CategoryResponse categoryResponse = categoryMapper.toCategoryResponse(category);
+
+            ApiResponse apiResponse = ApiResponse.builder()
+                    .success(true)
+                    .content(categoryResponse)
+                    .build();
+
+            return ResponseEntity.ok().body(apiResponse);
+        } else {
+            List<Category> categories = categoryService.getCategory();
+
+            List<CategoryResponse> categoryResponses = categories.stream().map(categoryMapper::toCategoryResponse).toList();
+
+            ApiResponse apiResponse = ApiResponse.builder()
+                    .success(true)
+                    .content(categoryResponses)
+                    .build();
+
+            return ResponseEntity.ok().body(apiResponse);
+        }
+    }
+
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable("categoryId") Integer categoryId) {
         Category category = categoryService.getCategoryById(categoryId);
