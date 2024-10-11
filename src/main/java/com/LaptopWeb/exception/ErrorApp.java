@@ -35,6 +35,14 @@ public enum ErrorApp {
     PRODUCT_STOCK_MIN_0("Product's stock must be at least 0", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
     PRODUCT_NOT_FOUND("Product not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_PRODUCT),
 
+    ORDER_NOT_FOUND("Order not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+    ORDER_ADDRESS_NOT_BLANK("Order's address not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+    ORDER_PHONE_NOT_BLANK("Order's phone not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+    ORDER_PAYMENT_TYPE_NOT_BLANK("Order's payment type not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+    ORDER_DETAIL_NOT_EMPTY("Order's detail type not empty", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+
+    STATUS_ORDER_NOT_FOUND("Status order not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
+    UPDATE_ORDER_STATUS_FAIL("Update order status fail", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
 
     ;
 
