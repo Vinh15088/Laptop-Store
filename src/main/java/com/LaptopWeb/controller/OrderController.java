@@ -1,15 +1,20 @@
 package com.LaptopWeb.controller;
 
+import com.LaptopWeb.dto.request.ChangeOrderStatusRequest;
 import com.LaptopWeb.dto.request.OrderRequest;
 import com.LaptopWeb.dto.response.ApiResponse;
+import com.LaptopWeb.dto.response.OrderDetailResponse;
 import com.LaptopWeb.dto.response.OrderResponse;
 import com.LaptopWeb.entity.Order;
+import com.LaptopWeb.entity.OrderDetail;
+import com.LaptopWeb.mapper.OrderDetailMapper;
 import com.LaptopWeb.mapper.OrderMapper;
 import com.LaptopWeb.service.OrderService;
-import com.LaptopWeb.utils.PageInfo;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,14 +29,27 @@ public class OrderController {
     @Autowired
     private OrderMapper orderMapper;
 
-    private static final String PAGE_SIZE = "10";
-    private static final String PAGE_NUMBER = "1";
+    @Autowired
+    private OrderDetailMapper orderDetailMapper;
 
-    @PostMapping
-    public ResponseEntity<?> createOrder(@RequestPart("order")OrderRequest request) {
-        Order order = orderService.createOrder(request);
+    private OrderResponse orderToOrderResponse(Order order) {
+        List<OrderDetail> orderDetails = order.getOrderDetails();
+
+        List<OrderDetailResponse> orderDetailResponses = orderDetails.stream()
+                .map(orderDetailMapper::toOrderDetailResponse).toList();
 
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
+        orderResponse.setOrderDetailResponses(orderDetailResponses);
+
+        return orderResponse;
+    }
+
+
+    @PostMapping
+    public ResponseEntity<?> createOrder(@Valid @RequestPart("order")OrderRequest request) {
+        Order order = orderService.createOrder(request, "vinhseo");
+
+        OrderResponse orderResponse = orderToOrderResponse(order);
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
@@ -45,7 +63,7 @@ public class OrderController {
     public ResponseEntity<?> getOrderById(@PathVariable("id") Integer id) {
         Order order = orderService.getOrderById(id);
 
-        OrderResponse orderResponse = orderMapper.toOrderResponse(order);
+        OrderResponse orderResponse = orderToOrderResponse(order);
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
@@ -59,7 +77,7 @@ public class OrderController {
     public ResponseEntity<?> getOrderByOrderCode(@PathVariable("orderCode") String orderCode) {
         Order order = orderService.getOrderByOrderCode(orderCode);
 
-        OrderResponse orderResponse = orderMapper.toOrderResponse(order);
+        OrderResponse orderResponse = orderToOrderResponse(order);
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
@@ -69,46 +87,33 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<?> getAllOrder(
-            @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
-            @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
-            @RequestParam(name = "sortBy", defaultValue = "id") String sortBy,
-            @RequestParam(name = "order", defaultValue = "asc") String order
+
+    @PutMapping("/code/{orderCode}/change-status")
+    public ResponseEntity<?> updateOrder(
+            @PathVariable String orderCode,
+            @RequestPart("changeOrderStatus") ChangeOrderStatusRequest request
     ) {
-        Page<Order> orderPage = orderService.getAllOrder(number-1, size, sortBy, order);
+        Order order = orderService.updateStatus(request.getNewOrderStatus(), orderCode);
 
-        List<Order> orders = orderPage.getContent();
-        List<OrderResponse> orderResponses = orders.stream().map(orderMapper::toOrderResponse).toList();
+        OrderResponse orderResponse = orderToOrderResponse(order);
 
-        PageInfo pageInfo = PageInfo.builder()
-                .page(orderPage.getNumber()+1)
-                .size(orderPage.getSize())
-                .totalElements(orderPage.getNumberOfElements())
-                .totalPages(orderPage.getTotalPages())
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(orderResponse)
                 .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @GetMapping("/my-orders")
+    public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
+        List<Order> orders = orderService.getMyOrder(jwt.getSubject());
+
+        List<OrderResponse> orderResponses = orders.stream().map(this::orderToOrderResponse).toList();
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
                 .content(orderResponses)
-                .pageInfo(pageInfo)
-                .build();
-
-        return ResponseEntity.ok().body(apiResponse);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateOrder(
-            @PathVariable("id") Integer id,
-            @RequestPart("order") OrderRequest request
-    ) {
-        Order order = orderService.updateOrder(id, request);
-
-        OrderResponse orderResponse = orderMapper.toOrderResponse(order);
-
-        ApiResponse<?> apiResponse = ApiResponse.builder()
-                .success(true)
-                .content(orderResponse)
                 .build();
 
         return ResponseEntity.ok().body(apiResponse);

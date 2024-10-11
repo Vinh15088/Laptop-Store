@@ -1,7 +1,7 @@
 package com.LaptopWeb.utils;
 
-import com.LaptopWeb.entity.StatusOrder;
-import com.LaptopWeb.repository.StatusOrderRepository;
+import com.LaptopWeb.entity.OrderStatus;
+import com.LaptopWeb.repository.OrderStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,16 +11,16 @@ import java.util.Arrays;
 //@Component
 //public class AddStatusOrder implements CommandLineRunner {
 //    @Autowired
-//    private StatusOrderRepository statusOrderRepository;
+//    private OrderStatusRepository orderStatusRepository;
 //
 //    @Override
 //    public void run(String... args) throws Exception {
-//        StatusOrder pending = new StatusOrder("Pending");
-//        StatusOrder confirmed = new StatusOrder("Confirmed");
-//        StatusOrder shipped = new StatusOrder("Shipped");
-//        StatusOrder delivered = new StatusOrder("Delivered");
-//        StatusOrder canceled = new StatusOrder("Canceled");
+//        OrderStatus pending = new OrderStatus("PENDING", "Order is pending approval");
+//        OrderStatus confirmed = new OrderStatus("CONFIRMED", "Order has been confirmed");
+//        OrderStatus shipped = new OrderStatus("SHIPPED", "Order has been shipped");
+//        OrderStatus delivered = new OrderStatus("DELIVERED", "Order has been delivered");
+//        OrderStatus canceled = new OrderStatus("CANCELED", "Order has been canceled");
 //
-//        statusOrderRepository.saveAll(Arrays.asList(pending, confirmed, shipped, delivered, canceled));
+//        orderStatusRepository.saveAll(Arrays.asList(pending, confirmed, shipped, delivered, canceled));
 //    }
 //}

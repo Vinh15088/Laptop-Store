@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @Entity
 @Table(name = "status_order")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class StatusOrder {
+public class OrderStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +20,10 @@ public class StatusOrder {
 
     String name;
 
-    public StatusOrder(String name) {
+    String description;
+
+    public OrderStatus(String name, String description) {
         this.name = name;
+        this.description = description;
     }
 }

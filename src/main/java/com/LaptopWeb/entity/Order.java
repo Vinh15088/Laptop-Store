@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -20,10 +21,13 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(nullable = false, unique = true)
     String orderCode;
 
     @Column(nullable = false)
     String address;
+
+    String phone;
 
     Date createdAt;
 
@@ -43,12 +47,16 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "status_order_id")
-    StatusOrder statusOrder;
+    OrderStatus orderStatus;
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    List<OrderDetail> orderDetails;
 
 
     @PrePersist
     public void generateOrderCode() {
+        createdAt = new Date();
+
         if (this.orderCode == null) {
             this.orderCode = UUID.randomUUID().toString();
         }

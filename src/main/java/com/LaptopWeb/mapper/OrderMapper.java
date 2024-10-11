@@ -9,13 +9,11 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
-    @Mapping(target = "user", ignore = true)
-    @Mapping(target = "statusOrder", ignore = true)
     Order toOrder(OrderRequest request);
 
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "statusOrderId", source = "statusOrder.id")
+    @Mapping(target = "fullName", source = "user.fullName")
+    @Mapping(target = "orderStatus", source = "orderStatus.name")
+//    @Mapping(target = "orderDetailResponses", ignore = true)
     OrderResponse toOrderResponse(Order order);
-
 
 }

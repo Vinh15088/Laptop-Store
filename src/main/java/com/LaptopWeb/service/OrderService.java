@@ -1,22 +1,19 @@
 package com.LaptopWeb.service;
 
+import com.LaptopWeb.dto.request.OrderDetailRequest;
 import com.LaptopWeb.dto.request.OrderRequest;
-import com.LaptopWeb.entity.Order;
-import com.LaptopWeb.entity.StatusOrder;
-import com.LaptopWeb.entity.User;
+import com.LaptopWeb.entity.*;
 import com.LaptopWeb.exception.AppException;
 import com.LaptopWeb.exception.ErrorApp;
+import com.LaptopWeb.mapper.OrderDetailMapper;
 import com.LaptopWeb.mapper.OrderMapper;
+import com.LaptopWeb.repository.OrderDetailRepository;
 import com.LaptopWeb.repository.OrderRepository;
-import com.LaptopWeb.repository.StatusOrderRepository;
+import com.LaptopWeb.repository.OrderStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -24,32 +21,49 @@ public class OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private ProductService productService;
+
+    @Autowired
     private UserService userService;
+
+    @Autowired
+    private OrderDetailMapper orderDetailMapper;
 
     @Autowired
     private OrderMapper orderMapper;
 
     @Autowired
-    private StatusOrderRepository statusOrderRepository;
+    private OrderStatusRepository orderStatusRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
 
 
-    public Order createOrder(OrderRequest request) {
+    public Order createOrder(OrderRequest request, String username) {
+        OrderStatus orderStatus = orderStatusRepository.findById(1).orElseThrow(); // get status PENDING
+
+        User user = userService.getByUsername(username);
+
+        List<OrderDetailRequest>  orderDetailRequestList = request.getDetailRequests();
+
         Order order = orderMapper.toOrder(request);
 
-        if(request.getUserId() != null) {
-            User user = userService.getById(request.getUserId());
+        List<OrderDetail> orderDetails = orderDetailRequestList.stream().map(
+                detailRequest -> {
+                    Product product = productService.getProductById(detailRequest.getProductId());
 
-            order.setUser(user);
-        }
+                    OrderDetail orderDetail = orderDetailMapper.toOrderDetail(detailRequest);
+                    orderDetail.setOrder(order);
+                    orderDetail.setProduct(product);
+                    orderDetail.setTotalPrice(detailRequest.getUnitPrice() * detailRequest.getQuantity());
 
-        if(request.getStatusOrderId() != null) {
-            StatusOrder statusOrder = (StatusOrder) statusOrderRepository.findById(request.getStatusOrderId()).orElseThrow(() ->
-                    new AppException(ErrorApp.STATUS_ORDER_NOT_FOUND));
+                    return orderDetail;
+                }
+        ).toList();
 
-            order.setStatusOrder(statusOrder);
-        }
-
-        order.setCreatedAt(new Date());
+        order.setOrderStatus(orderStatus);
+        order.setUser(user);
+        order.setOrderDetails(orderDetails);
 
         return orderRepository.save(order);
     }
@@ -64,37 +78,19 @@ public class OrderService {
                 new AppException(ErrorApp.ORDER_NOT_FOUND));
     }
 
-    public Page<Order> getAllOrder(Integer number, Integer size, String sortBy, String order) {
-        Sort sort = Sort.by(Sort.Direction.valueOf(order.toUpperCase()), sortBy);
-
-        Pageable pageable = PageRequest.of(number, size, sort);
-
-        return orderRepository.findAll(pageable);
+    public List<Order> getMyOrder(String username) {
+        return orderRepository.getAllOrderByUser(username);
     }
 
-    public Order updateOrder(Integer id, OrderRequest request) {
-        Order order = getOrderById(id);
+    public Order updateStatus(String orderStatus, String orderCode) {
+        OrderStatus orderStatus1 = orderStatusRepository.findByName(orderStatus).orElseThrow();
 
-        Order order1 = orderMapper.toOrder(request);
+        int update = orderRepository.updateOrderStatus(orderStatus1, orderCode);
 
-        if(request.getUserId() != null) {
-            User user = userService.getById(request.getUserId());
-
-            order1.setUser(user);
-        }
-
-        if(request.getStatusOrderId() != null) {
-            StatusOrder statusOrder = (StatusOrder) statusOrderRepository.findById(request.getStatusOrderId()).orElseThrow(() ->
-                    new AppException(ErrorApp.STATUS_ORDER_NOT_FOUND));
-
-            order1.setStatusOrder(statusOrder);
-        }
-
-        order1.setId(order.getId());
-        order1.setCreatedAt(order.getCreatedAt());
-
-        return orderRepository.save(order1);
+        if(update == 1) return getOrderByOrderCode(orderCode);
+        else throw new AppException(ErrorApp.UPDATE_ORDER_STATUS_FAIL);
     }
+
 
     public void deleteOrder(Integer id) {
         Order order = getOrderById(id);
