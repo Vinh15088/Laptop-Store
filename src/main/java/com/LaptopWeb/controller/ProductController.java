@@ -8,6 +8,7 @@ import com.LaptopWeb.mapper.ProductMapper;
 import com.LaptopWeb.service.ProductService;
 import com.LaptopWeb.utils.PageInfo;
 import com.amazonaws.services.machinelearning.model.PredictRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<?> createProduct(
+            @Valid
             @RequestPart("product") ProductRequest request,
             @RequestPart("image")MultipartFile image
             ) throws Exception {

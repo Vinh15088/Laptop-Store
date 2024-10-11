@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -54,4 +55,5 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "brand_id")
     Brand brand;
+
 }

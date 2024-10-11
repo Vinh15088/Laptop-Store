@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class ProductService {
@@ -104,6 +105,10 @@ public class ProductService {
                 : productRepository.findAll(pageable);
     }
 
+    public List<Product> getProductsByIds(List<Integer> productIds) {
+        return productRepository.findAllById(productIds);
+    }
+
     public Product updateProduct(Integer id, ProductRequest request, MultipartFile imageProduct) throws Exception {
         Product product = getProductById(id);
 
@@ -117,13 +122,13 @@ public class ProductService {
         if(request.getCategory_id() != null) {
             Category category = categoryService.getCategoryById(request.getCategory_id());
 
-            product.setCategory(category);
+            product1.setCategory(category);
         }
 
         if(request.getBrand_id() != null) {
             Brand brand = brandService.getById(request.getBrand_id());
 
-            product.setBrand(brand);
+            product1.setBrand(brand);
         }
 
         product1.setId(product.getId());
