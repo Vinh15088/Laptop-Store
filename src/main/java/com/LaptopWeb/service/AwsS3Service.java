@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,14 +21,8 @@ public class AwsS3Service {
 
     private final String BUCKET_NAME = "ecommerce-vinhseo";
 
-    @Value("${cloud.aws.credentials.access-key}")
-    private String ACCESS_KEY;
-
-    @Value("${cloud.aws.credentials.secret-key}")
-    private String SECRET_KEY;
-
-    @Value("${cloud.aws.region}")
-    private String REGION;
+    @Autowired
+    private AmazonS3 amazonS3;
 
     // save imgage to s3
     public String saveImageToS3(MultipartFile photo, String folder) throws Exception {
@@ -35,15 +30,6 @@ public class AwsS3Service {
         try {
             // get original filename
             String s3FileName = folder + "/" + photo.getOriginalFilename();
-
-            // create aws credential using access and secret keys
-            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-
-            // build an amazon s3 client with credential and region
-            AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                    .withRegion(Regions.AP_SOUTHEAST_2)
-                    .build();
 
             // abtain an inputStream from photo file upload
             InputStream inputStream = photo.getInputStream();
@@ -81,16 +67,7 @@ public class AwsS3Service {
 
     public void deleteImageFromS3(String folder, String fileName) throws Exception {
         try {
-            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY);
-
-            // build an amazon s3 client with credential and region
-            AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                    .withRegion(Regions.AP_SOUTHEAST_2)
-                    .build();
-
             String urlFile = folder + "/" + fileName;
-
 
             // delete obj from s3
             amazonS3.deleteObject(BUCKET_NAME, urlFile);
