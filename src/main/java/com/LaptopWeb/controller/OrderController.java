@@ -13,6 +13,7 @@ import com.LaptopWeb.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,9 @@ public class OrderController {
     @Autowired
     private OrderDetailMapper orderDetailMapper;
 
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
+
     private OrderResponse orderToOrderResponse(Order order) {
         List<OrderDetail> orderDetails = order.getOrderDetails();
 
@@ -50,6 +54,9 @@ public class OrderController {
         Order order = orderService.createOrder(request, "vinhseo");
 
         OrderResponse orderResponse = orderToOrderResponse(order);
+
+        // send message orderResponse after create an order
+        simpMessagingTemplate.convertAndSend("/notice/admin", orderResponse);
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
