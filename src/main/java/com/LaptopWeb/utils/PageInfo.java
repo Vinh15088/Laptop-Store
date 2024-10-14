@@ -16,4 +16,6 @@ public class PageInfo {
     Integer totalElements;
     Integer totalPages;
     Integer page;
+    boolean hasNext;
+    boolean hasPrevious;
 }
