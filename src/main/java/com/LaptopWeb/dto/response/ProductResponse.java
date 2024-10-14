@@ -1,11 +1,9 @@
 package com.LaptopWeb.dto.response;
 
-import com.LaptopWeb.entity.Brand;
-import com.LaptopWeb.entity.Category;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
