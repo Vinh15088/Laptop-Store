@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/reviews")
@@ -30,9 +31,15 @@ public class ReviewController {
     @Autowired
     private ReviewMapper reviewMapper;
 
-    @PostMapping
+    @PostMapping /*checked success*/
     public ResponseEntity<?> createReview(@Valid @RequestBody ReviewRequest request, @AuthenticationPrincipal Jwt jwt) {
-        Review review = reviewService.createReview(jwt.getSubject(), request);
+//        Map<String, Object> data = (Map<String, Object>) jwt.getClaim("data");
+//
+//        String username = (String) data.get("username");
+
+        String username = (String) jwt.getClaimAsMap("data").get("username");
+
+        Review review = reviewService.createReview(username, request);
 
         ReviewResponse reviewResponse = reviewMapper.toReviewResponse(review);
 
@@ -44,7 +51,7 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/{reviewId}")
+    @GetMapping("/{reviewId}") /*checked success*/
     public ResponseEntity<?> getReviewById(@PathVariable("reviewId") Integer reviewId) {
         Review review = reviewService.getReviewById(reviewId);
 
@@ -58,7 +65,7 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/{productId}/byRating")
+    @GetMapping("/byRating/{productId}") /*checked success*/
     public ResponseEntity<?> getReviewByRating(
             @PathVariable(name = "productId") Integer productId,
             @RequestParam(name = "rating", required = false) Integer rating,
@@ -89,12 +96,14 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("{productId}/byUser")
+    @GetMapping("{productId}/byUser") /*checked success*/
     public ResponseEntity<?> getReviewByUser(
             @PathVariable(name = "productId") Integer productId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Review review = reviewService.getByUserAndProduct(jwt.getSubject(), productId);
+        String username = (String) jwt.getClaimAsMap("data").get("username");
+
+        Review review = reviewService.getByUserAndProduct(username, productId);
 
         ReviewResponse reviewResponse = reviewMapper.toReviewResponse(review);
 
@@ -106,13 +115,17 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @PutMapping("/update/{reviewId}")
+    @PutMapping("/update/{reviewId}") /*checked success*/
     public ResponseEntity<?> updateReview(
             @PathVariable(name = "reviewId") Integer reviewId,
             @RequestBody ReviewRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Review review = reviewService.updateReview(reviewId, request, jwt.getSubject());
+        Map<String, Object> data = (Map<String, Object>) jwt.getClaim("data");
+
+        String username = (String) data.get("username");
+
+        Review review = reviewService.updateReview(reviewId, request, username);
 
         ReviewResponse reviewResponse = reviewMapper.toReviewResponse(review);
 
@@ -124,7 +137,7 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{reviewId}")
+    @DeleteMapping("/{reviewId}") /*checked success*/
     public ResponseEntity<?> deleteReview(@PathVariable(name = "reviewId") Integer reviewId) {
         reviewService.deleteReview(reviewId);
 

@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,6 +31,7 @@ public class ReviewService {
     @Autowired
     private ProductService productService;
 
+    @PreAuthorize("hasRole('USER')")
     public Review createReview(String username, ReviewRequest request) {
         User user = userService.getByUsername(username);
 
@@ -86,6 +88,8 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
+
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteReview(Integer id) {
         reviewRepository.deleteById(id);
     }
