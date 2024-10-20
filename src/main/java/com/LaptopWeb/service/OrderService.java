@@ -11,11 +11,18 @@ import com.LaptopWeb.repository.OrderDetailRepository;
 import com.LaptopWeb.repository.OrderRepository;
 import com.LaptopWeb.repository.OrderStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@EnableMethodSecurity
 public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
@@ -39,10 +46,11 @@ public class OrderService {
     private OrderDetailRepository orderDetailRepository;
 
 
-    public Order createOrder(OrderRequest request, String username) {
+    @PreAuthorize("hasRole('USER')")
+    public Order createOrder(OrderRequest request, Integer userId) {
         OrderStatus orderStatus = orderStatusRepository.findById(1).orElseThrow(); // get status PENDING
 
-        User user = userService.getByUsername(username);
+        User user = userService.getById(userId);
 
         List<OrderDetailRequest>  orderDetailRequestList = request.getDetailRequests();
 
@@ -68,20 +76,33 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id).orElseThrow(() ->
                 new AppException(ErrorApp.ORDER_NOT_FOUND));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Order getOrderByOrderCode(String orderCode) {
         return orderRepository.findByOrderCode(orderCode).orElseThrow(() ->
                 new AppException(ErrorApp.ORDER_NOT_FOUND));
     }
 
+    @PreAuthorize("#username == principal.claims['data']['username']")
     public List<Order> getMyOrder(String username) {
         return orderRepository.getAllOrderByUser(username);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<Order> getAllOrders(Integer number, Integer size, String sortBy, String order) {
+        Sort sort = Sort.by(Sort.Direction.valueOf(order.toUpperCase()), sortBy);
+
+        Pageable pageable = PageRequest.of(number, size, sort);
+
+        return orderRepository.findAll(pageable);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     public Order updateStatus(String orderStatus, String orderCode) {
         OrderStatus orderStatus1 = orderStatusRepository.findByName(orderStatus).orElseThrow();
 
@@ -91,7 +112,7 @@ public class OrderService {
         else throw new AppException(ErrorApp.UPDATE_ORDER_STATUS_FAIL);
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteOrder(Integer id) {
         Order order = getOrderById(id);
 

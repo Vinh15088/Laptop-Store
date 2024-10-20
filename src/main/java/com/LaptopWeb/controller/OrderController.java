@@ -10,8 +10,10 @@ import com.LaptopWeb.entity.OrderDetail;
 import com.LaptopWeb.mapper.OrderDetailMapper;
 import com.LaptopWeb.mapper.OrderMapper;
 import com.LaptopWeb.service.OrderService;
+import com.LaptopWeb.utils.PageInfo;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,10 +21,14 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
+
+    private static final String PAGE_NUMBER = "1";
+    private static final String PAGE_SIZE = "10";
 
     @Autowired
     private OrderService orderService;
@@ -49,9 +55,19 @@ public class OrderController {
     }
 
 
-    @PostMapping
-    public ResponseEntity<?> createOrder(@Valid @RequestPart("order")OrderRequest request) {
-        Order order = orderService.createOrder(request, "vinhseo");
+    @PostMapping /*checked success*/
+    public ResponseEntity<?> createOrder(
+            @Valid
+            @RequestPart("order")OrderRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+//        Map<String, Object> data = (Map<String, Object>) jwt.getClaim("data");
+//        Integer userId = (Integer) data.get("id");
+
+        Long userIdLong = (Long) jwt.getClaimAsMap("data").get("id");
+        Integer userId = userIdLong != null ? userIdLong.intValue() : null;
+
+        Order order = orderService.createOrder(request, userId);
 
         OrderResponse orderResponse = orderToOrderResponse(order);
 
@@ -66,7 +82,7 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/id/{id}")
+    @GetMapping("/id/{id}")  /*checked success*/
     public ResponseEntity<?> getOrderById(@PathVariable("id") Integer id) {
         Order order = orderService.getOrderById(id);
 
@@ -80,7 +96,7 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/code/{orderCode}")
+    @GetMapping("/code/{orderCode}") /*checked success*/
     public ResponseEntity<?> getOrderByOrderCode(@PathVariable("orderCode") String orderCode) {
         Order order = orderService.getOrderByOrderCode(orderCode);
 
@@ -94,8 +110,36 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    @GetMapping("/all") /*checked success*/
+    public ResponseEntity<?> getAllOrders(
+            @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
+            @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
+            @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
+            @RequestParam(name = "order", defaultValue = "desc") String order
+    ) {
+        Page<Order> orderPage = orderService.getAllOrders(number-1, size, sortBy, order);
 
-    @PutMapping("/code/{orderCode}/change-status")
+        List<Order> orders = orderPage.getContent();
+        List<OrderResponse> orderResponses = orders.stream().map(orderMapper::toOrderResponse).toList();
+
+        PageInfo pageInfo = PageInfo.builder()
+                .page(orderPage.getNumber()+1)
+                .size(orderPage.getSize())
+                .totalElements(orderPage.getNumberOfElements())
+                .totalPages(orderPage.getTotalPages())
+                .build();
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(orderResponses)
+                .pageInfo(pageInfo)
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+
+    @PutMapping("/code/{orderCode}/change-status") /*checked success*/
     public ResponseEntity<?> updateOrder(
             @PathVariable String orderCode,
             @RequestPart("changeOrderStatus") ChangeOrderStatusRequest request
@@ -112,9 +156,15 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/my-orders")
+    @GetMapping("/my-order") /*checked success*/
     public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
-        List<Order> orders = orderService.getMyOrder(jwt.getSubject());
+        Map<String, Object> data = (Map<String, Object>) jwt.getClaim("data");
+
+        String username = (String) data.get("username");
+
+//        System.out.println(username);
+
+        List<Order> orders = orderService.getMyOrder(username);
 
         List<OrderResponse> orderResponses = orders.stream().map(this::orderToOrderResponse).toList();
 
@@ -126,7 +176,7 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}") /*checked success*/
     public ResponseEntity<?> deleteOrder(@PathVariable("id") Integer id) {
         orderService.deleteOrder(id);
 
