@@ -23,7 +23,7 @@ public class CategoryController {
     @Autowired
     private CategoryMapper categoryMapper;
 
-    @PostMapping
+    @PostMapping /*checked success*/
     public ResponseEntity<ApiResponse<?>> createCategory(@Valid @RequestBody CategoryRequest request) {
         Category category = categoryService.createCategory(request);
 
@@ -37,9 +37,9 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping
+    @GetMapping /*checked success*/
     public ResponseEntity<?> getCategory(@RequestParam(name="name", required = false) String name) {
-        if(name != null) {
+        if(name != null && !name.isEmpty()) {
             Category category = categoryService.getByName(name);
 
             CategoryResponse categoryResponse = categoryMapper.toCategoryResponse(category);
@@ -64,7 +64,7 @@ public class CategoryController {
         }
     }
 
-    @GetMapping("/{categoryId}")
+    @GetMapping("/{categoryId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable("categoryId") Integer categoryId) {
         Category category = categoryService.getCategoryById(categoryId);
 
@@ -78,7 +78,7 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/all") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getAll() {
         List<Category> categories = categoryService.getAll();
 
@@ -92,7 +92,7 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @PutMapping("/{categoryId}")
+    @PutMapping("/{categoryId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> updateCategory(
             @PathVariable("categoryId") Integer categoryId,
             @RequestBody CategoryRequest request
@@ -109,7 +109,7 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{categoryId}")
+    @DeleteMapping("/{categoryId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> deleteCategory(@PathVariable("categoryId") Integer categoryId) {
         categoryService.deleteCategory(categoryId);
 
