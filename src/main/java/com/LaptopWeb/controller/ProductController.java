@@ -7,7 +7,6 @@ import com.LaptopWeb.entity.Product;
 import com.LaptopWeb.mapper.ProductMapper;
 import com.LaptopWeb.service.ProductService;
 import com.LaptopWeb.utils.PageInfo;
-import com.amazonaws.services.machinelearning.model.PredictRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,7 +29,7 @@ public class ProductController {
     private static final String PAGE_SIZE = "20";
     private static final String PAGE_NUMBER = "1";
 
-    @PostMapping
+    @PostMapping /*checked success*/
     public ResponseEntity<?> createProduct(
             @Valid
             @RequestPart("product") ProductRequest request,
@@ -48,7 +47,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}") /*checked success*/
     public ResponseEntity<?> getProductById(@PathVariable("id") Integer id) {
         Product product = productService.getProductById(id);
 
@@ -62,7 +61,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/all") /*checked success*/
     public ResponseEntity<?> getAllProduct(
         @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
         @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
@@ -90,7 +89,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/category/{id}")
+    @GetMapping("/category/{id}") /*checked success*/
     public ResponseEntity<?> getAllProductByCategory(
             @PathVariable("id") Integer id,
             @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
@@ -119,7 +118,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/brand/{id}")
+    @GetMapping("/brand/{id}") /*checked success*/
     public ResponseEntity<?> getAllProductByBrand(
             @PathVariable("id") Integer id,
             @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
@@ -148,7 +147,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search") /*checked success*/
     public ResponseEntity<?> getProductWithKeyword(
             @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
             @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
@@ -176,7 +175,7 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}") /*checked success*/
     public ResponseEntity<?> updateProduct(
             @PathVariable("id") Integer id,
             @RequestPart(name = "product", required = false) ProductRequest request,
@@ -194,13 +193,30 @@ public class ProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}") /*checked success*/
     public ResponseEntity<?> deleteProduct(@PathVariable("id") Integer id) throws Exception {
         productService.deleteProduct(id);
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
                 .content("Delete product successful")
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @PutMapping("/{productId}/add-stock") /*checked success*/
+    public ResponseEntity<?> addProductStock(
+            @PathVariable("productId") Integer productId,
+            @RequestParam("stock") int stock
+    ) {
+        Product product = productService.addProductStock(productId, stock);
+
+        ProductResponse productResponse = productMapper.toProductResponse(product);
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(productResponse)
                 .build();
 
         return ResponseEntity.ok().body(apiResponse);

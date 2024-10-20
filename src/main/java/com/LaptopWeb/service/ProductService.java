@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
+@EnableMethodSecurity
 public class ProductService {
 
     @Autowired
@@ -37,6 +40,7 @@ public class ProductService {
     @Autowired
     private BrandService brandService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Product createProduct(ProductRequest request, MultipartFile imageProduct) throws Exception {
         if (productRepository.existsByName(request.getName())) {
             throw  new AppException(ErrorApp.PRODUCT_NAME_EXISTED);
@@ -109,6 +113,7 @@ public class ProductService {
         return productRepository.findAllById(productIds);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Product updateProduct(Integer id, ProductRequest request, MultipartFile imageProduct) throws Exception {
         Product product = getProductById(id);
 
@@ -150,6 +155,7 @@ public class ProductService {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteProduct(Integer id) throws Exception {
         Product product = getProductById(id);
 
@@ -160,7 +166,14 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public Product addProductStock(Integer id, int stock) {
+        Product product = getProductById(id);
 
+        product.setStock(product.getStock() + stock);
+
+        return productRepository.save(product);
+    }
 
 
 }
