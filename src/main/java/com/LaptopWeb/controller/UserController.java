@@ -12,17 +12,19 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.LaptopWeb.utils.PageInfo.PAGE_NUMBER;
-import static com.LaptopWeb.utils.PageInfo.PAGE_SIZE;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
+    private static final String PAGE_NUMBER = "1";
+    private static final String PAGE_SIZE = "10";
 
 
     @Autowired
@@ -31,7 +33,7 @@ public class UserController {
     @Autowired
     private UserMapper userMapper;
 
-    @PostMapping
+    @PostMapping("/register") /*checked success*/
     public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody CreateUserRequest request) throws Exception {
         User user = userService.createUser(request);
 
@@ -45,7 +47,7 @@ public class UserController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{userId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable("userId") Integer userid) {
         User user = userService.getById(userid);
 
@@ -59,7 +61,23 @@ public class UserController {
         return  ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/my-profile") /*checked success*/
+    public ResponseEntity<ApiResponse<?>> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
+        String username = (String) jwt.getClaimAsMap("data").get("username");
+
+        User user = userService.getByUsername(username);
+
+        UserResponse userResponse = userMapper.toUserResponse(user);
+
+        ApiResponse apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(userResponse)
+                .build();
+
+        return  ResponseEntity.ok().body(apiResponse);
+    }
+
+    @GetMapping("/all") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getAll() {
         List<User> users = userService.getAll();
 
@@ -74,7 +92,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getUserPage(
+    public ResponseEntity<ApiResponse<?>> getUserPage( /*checked success*/
             @RequestParam(name = "pageNumber", defaultValue = PAGE_NUMBER) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = PAGE_SIZE ) Integer pageSize,
             @RequestParam(name = "sortField") String sortField,
@@ -89,7 +107,7 @@ public class UserController {
                 .page(page.getNumber() + 1)
                 .size(page.getSize())
                 .totalPages(page.getTotalPages())
-                .totalElements(page.getTotalPages())
+                .totalElements(page.getNumberOfElements())
                 .build();
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
@@ -101,7 +119,7 @@ public class UserController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping("/{userId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> updateUser (
             @Valid @RequestBody UpdateUserRequest request,
             @PathVariable("userId") Integer userId
@@ -118,7 +136,22 @@ public class UserController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{userId}")
+    @PutMapping("/change-password/{userId}") /*checked success*/
+    public ResponseEntity<ApiResponse<?>> changePassword(
+            @PathVariable("userId") Integer userId,
+            @RequestPart("password") String password
+    ) {
+        User user = userService.changePassword(userId, password);
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content("Change password successful")
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @DeleteMapping("/{userId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> deleteUser (@PathVariable("userId") Integer userId) {
         userService.deleteUser(userId);
 
@@ -129,7 +162,5 @@ public class UserController {
 
         return ResponseEntity.ok().body(apiResponse);
     }
-
-
 
 }

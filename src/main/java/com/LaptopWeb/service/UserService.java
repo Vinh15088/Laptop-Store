@@ -13,12 +13,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@EnableMethodSecurity
 public class UserService {
 
     @Autowired
@@ -48,10 +51,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public List<User> getAll() {
         return userRepository.findAll();
     }
 
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.claims['data']['id']")
     public User getById(Integer id) {
         User user = userRepository.findById(id).orElseThrow(() ->
                 new AppException(ErrorApp.USER_NOTFOUND));
@@ -66,6 +71,7 @@ public class UserService {
         return user;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<User> getPageUser(Integer pageNum, Integer size, String sortField, String keyWord) {
         Sort sort = sortField != null ? Sort.by(sortField).ascending() : Sort.unsorted();
         Pageable pageable = PageRequest.of(pageNum, size, sort);
@@ -78,7 +84,7 @@ public class UserService {
 
     }
 
-
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.claims['data']['id']")
     public User updateUser(Integer id, UpdateUserRequest request) {
         User user = getById(id);
 
@@ -92,6 +98,18 @@ public class UserService {
         return userRepository.save(user1);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.claims['data']['id']")
+    public User changePassword(Integer id, String password) {
+        User user = getById(id);
+
+        String encodePassword = passwordEncoder.encode(password);
+
+        user.setPassword(encodePassword);
+
+        return userRepository.save(user);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(Integer id) {
         User user = getById(id);
 
