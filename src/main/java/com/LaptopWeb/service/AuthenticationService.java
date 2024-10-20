@@ -28,6 +28,8 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -86,6 +88,12 @@ public class AuthenticationService {
 
     // method create token from user
     private String generateToken(User user) {
+        Map<String, Object> dataUser = new HashMap<>();
+
+        dataUser.put("id", user.getId());
+        dataUser.put("username", user.getUsername());
+        dataUser.put("email", user.getEmail());
+
         // create jwt header with hs512 signing algorith
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
@@ -99,6 +107,7 @@ public class AuthenticationService {
                 ))
                 .jwtID(UUID.randomUUID().toString()) // unique identifier for the token
                 .claim("scope", user.getRole().getName()) // custom claim: user's role
+                .claim("data", dataUser)
                 .build();
 
         // convert claims set to a payload
