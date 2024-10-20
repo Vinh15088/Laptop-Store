@@ -24,7 +24,7 @@ public class BrandController {
     @Autowired
     private BrandMapper brandMapper;
 
-    @PostMapping
+    @PostMapping /*checked success*/
     public ResponseEntity<?> createBrand(
             @Valid
             @RequestPart("brand") BrandRequest request,
@@ -43,7 +43,7 @@ public class BrandController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/{brandId}")
+    @GetMapping("/{brandId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getBrandById(@PathVariable("brandId") Integer brandId) {
         Brand brand = brandService.getById(brandId);
 
@@ -57,7 +57,34 @@ public class BrandController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all")
+    @GetMapping /*checked success*/
+    public ResponseEntity<ApiResponse<?>> getBrandByKeyOfName(@RequestParam(name = "name", required = false) String name) {
+        if(name != null && !name.isEmpty()) {
+            List<Brand> brands = brandService.getByKeyOfName(name);
+
+            List<BrandResponse> listBrandResponse = brands.stream().map(brandMapper::toBrandResponse).toList();
+
+            ApiResponse<?> apiResponse = ApiResponse.builder()
+                    .success(true)
+                    .content(listBrandResponse)
+                    .build();
+
+            return ResponseEntity.ok().body(apiResponse);
+        } else {
+            List<Brand> brands = brandService.getAllBrand();
+
+            List<BrandResponse> listBrandResponse = brands.stream().map(brandMapper::toBrandResponse).toList();
+
+            ApiResponse<?> apiResponse = ApiResponse.builder()
+                    .success(true)
+                    .content(listBrandResponse)
+                    .build();
+
+            return ResponseEntity.ok().body(apiResponse);
+        }
+    }
+
+    @GetMapping("/all") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getAllBrand() {
         List<Brand> brands = brandService.getAllBrand();
 
@@ -72,7 +99,7 @@ public class BrandController {
     }
 
 
-    @PutMapping("/{brandId}")
+    @PutMapping("/{brandId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> updateBrand(
             @Valid
             @PathVariable("brandId") Integer brandId,
@@ -91,7 +118,7 @@ public class BrandController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @DeleteMapping("/{brandId}")
+    @DeleteMapping("/{brandId}") /*checked success*/
     public ResponseEntity<ApiResponse<?>> deleteBrand (@PathVariable("brandId") Integer brandId) throws Exception {
         brandService.deleteBrand(brandId);
 
