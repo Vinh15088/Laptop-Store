@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Objects;
 
 @ControllerAdvice
@@ -38,6 +39,16 @@ public class ExceptionHanlder {
                 .build();
 
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException exception) {
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(false)
+                .message(ErrorApp.ACCESS_DENIED.getMessage())
+                .build();
+
+        return ResponseEntity.status(ErrorApp.UNAUTHENTICATED.getHttpStatusCode()).body(apiResponse);
     }
 
 
