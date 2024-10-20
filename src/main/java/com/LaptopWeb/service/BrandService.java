@@ -7,6 +7,7 @@ import com.LaptopWeb.exception.ErrorApp;
 import com.LaptopWeb.mapper.BrandMapper;
 import com.LaptopWeb.repository.BrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,7 @@ public class BrandService {
     @Autowired
     private BrandMapper brandMapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Brand createBrand(BrandRequest request, MultipartFile logo) throws Exception {
         if(brandRepository.existsByName(request.getName())) throw new AppException(ErrorApp.BRAND_NAME_EXISTED);
 
@@ -55,14 +57,14 @@ public class BrandService {
         return brand;
     }
 
-    public Brand getByName(String name) {
-        Brand brand = brandRepository.findByName(name).orElseThrow(() ->
+    public List<Brand> getByKeyOfName(String name) {
+        List<Brand> brands = (List<Brand>) brandRepository.findByName(name).orElseThrow(() ->
                 new AppException(ErrorApp.BRAND_NOT_FOUND));
 
-        return brand;
+        return brands;
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     public Brand updateBrand(Integer brandId, BrandRequest request, MultipartFile logo) throws Exception {
         Brand brand = getById(brandId);
 
@@ -71,7 +73,7 @@ public class BrandService {
         String folder = "brands/" + brandId;
 
         if(logo != null) {
-            awsS3Service.deleteImageFromS3(folder, logo.getOriginalFilename());
+            awsS3Service.deleteImageFromS3(folder, brand.getLogo());
 
             brand.setLogo(logo.getOriginalFilename());
 
@@ -81,6 +83,7 @@ public class BrandService {
         return brandRepository.save(brand);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteBrand(Integer brandId) throws Exception {
         Brand brand = getById(brandId);
 
