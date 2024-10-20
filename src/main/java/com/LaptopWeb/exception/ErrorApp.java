@@ -40,10 +40,23 @@ public enum ErrorApp {
     ORDER_PHONE_NOT_BLANK("Order's phone not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
     ORDER_PAYMENT_TYPE_NOT_BLANK("Order's payment type not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
     ORDER_DETAIL_NOT_EMPTY("Order's detail type not empty", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
-
     STATUS_ORDER_NOT_FOUND("Status order not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
     UPDATE_ORDER_STATUS_FAIL("Update order status fail", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
 
+    CART_NOT_FOUND("Cart not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+    CART_ITEM_NOT_FOUND("Cart item not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+    CART_EMPTY("Cart empty", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+    CART_ITEM_QUANTITY_MIN("Cart item quantity min 1", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+    CART_ITEM_PRICE_MIN("Cart item price min 0", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+    CART_EXISTED("Cart existed from another user", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_CART),
+
+    REVIEW_COMMENT_BLANK("Review comment not blank", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
+    REVIEW_RATING_NULL("Review rating not null", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
+    REVIEW_NOT_FOUND("Review not found", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
+    REVIEW_EXISTED("Review existed by this product and user", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
+    REVIEW_ACCESS_DENIED("Review access denied", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
+
+    ACCESS_DENIED("Access denied", HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED),
     ;
 
 

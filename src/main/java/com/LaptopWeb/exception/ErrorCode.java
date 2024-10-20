@@ -9,6 +9,9 @@ public enum ErrorCode {
     ERROR_CATEGORY(1006, "Category error"),
     ERROR_PRODUCT(1007, "Product error"),
     ERROR_ORDER(1008, "Order error"),
+    ERROR_CART(1009, "Cart error"),
+    ERROR_REVIEW(1010, "Review error"),
+    ACCESS_DENIED(1011, "Access denied"),
 
 
     ;
