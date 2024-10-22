@@ -2,6 +2,7 @@ package com.LaptopWeb.service;
 
 import com.LaptopWeb.dto.request.CreateUserRequest;
 import com.LaptopWeb.dto.request.UpdateUserRequest;
+import com.LaptopWeb.entity.EmailDetails;
 import com.LaptopWeb.entity.Role;
 import com.LaptopWeb.entity.User;
 import com.LaptopWeb.exception.AppException;
@@ -36,19 +37,52 @@ public class UserService {
     @Autowired
     private RoleService roleService;
 
-    public User createUser(CreateUserRequest request) throws Exception{
-        Role role = roleService.getRole("USER");
+    @Autowired
+    private EmailService emailService;
 
+    public User createUser(CreateUserRequest request) throws Exception{
+        // Kiểm tra tên đăng nhập và email trước khi tiếp tục
+        if (userRepository.existsByUsername(request.getUsername()))
+            throw new AppException(ErrorApp.USERNAME_EXISTED);
+        if (userRepository.existsByEmail(request.getEmail()))
+            throw new AppException(ErrorApp.EMAIL_EXISTED);
+
+        // Lấy role và tạo user từ request
+        Role role = roleService.getRole("USER");
         User user = userMapper.toUser(request);
 
-        if(userRepository.existsByUsername(user.getUsername())) throw new AppException(ErrorApp.USERNAME_EXISTED);
-        if(userRepository.existsByEmail(user.getEmail())) throw new AppException(ErrorApp.EMAIL_EXISTED);
-
+        // Mã hóa mật khẩu và thiết lập role
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         user.setRole(role);
 
-        return userRepository.save(user);
+        // Lưu user vào database
+        User savedUser = userRepository.save(user);
+
+        // Tạo nội dung email sau khi lưu thành công
+        EmailDetails emailDetails = new EmailDetails();
+        emailDetails.setRecipient(savedUser.getEmail());
+        emailDetails.setSubject("Chào mừng bạn đến với hệ thống của chúng tôi!");
+
+        String msgBody = String.format(
+                "Xin chào %s,\n\n"
+                        + "Tài khoản của bạn đã được tạo thành công với thông tin sau:\n"
+                        + "Tên đăng nhập: %s\n"
+                        + "Mật khẩu: %s\n"
+                        + "Email: %s\n"
+                        + "Số điện thoại: %s\n"
+                        + "Ngày sinh: %s\n\n"
+                        + "Vui lòng đăng nhập và đổi mật khẩu để đảm bảo an toàn.\n\n"
+                        + "Trân trọng,\nĐội ngũ hỗ trợ",
+                savedUser.getFullName(), savedUser.getUsername(),
+                request.getPassword(), savedUser.getEmail(),
+                savedUser.getPhoneNumber(), savedUser.getDob()
+        );
+        emailDetails.setMsgBody(msgBody);
+
+        // Gửi email thông báo
+        emailService.sendSimpleMail(emailDetails);
+
+        return savedUser;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
