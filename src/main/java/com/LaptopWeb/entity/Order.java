@@ -40,6 +40,7 @@ public class Order {
 
     String paymentType;
 
+    String txnRef;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

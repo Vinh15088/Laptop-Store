@@ -19,7 +19,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
+
 import java.util.List;
+import java.util.TimeZone;
 
 @Service
 @EnableMethodSecurity
@@ -45,6 +48,61 @@ public class OrderService {
     @Autowired
     private OrderDetailRepository orderDetailRepository;
 
+    @Autowired
+    private EmailService emailService;
+
+    private void sendOrderConfirmationEmail(Order order) {
+        EmailDetails emailDetails = new EmailDetails();
+        emailDetails.setRecipient(order.getUser().getEmail());
+        emailDetails.setSubject("Xác nhận đơn hàng #" + order.getOrderCode());
+
+        // Định dạng ngày từ java.util.Date
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        String formattedDate = formatter.format(order.getCreatedAt());
+
+        // Tạo nội dung email chi tiết đơn hàng
+        StringBuilder productDetails = new StringBuilder();
+        for (OrderDetail detail : order.getOrderDetails()) {
+            productDetails.append(String.format(
+                    "- %s: %d x %d = %d VND\n",
+                    detail.getProduct().getName(),
+                    detail.getQuantity(),
+                    detail.getUnitPrice(),
+                    detail.getTotalPrice()
+            ));
+        }
+
+        String msgBody = String.format(
+                "Xin chào %s,\n\n"
+                        + "Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi!\n\n"
+                        + "Thông tin đơn hàng của bạn:\n"
+                        + "Mã đơn hàng: %s\n"
+                        + "Ngày đặt hàng: %s\n"
+                        + "Địa chỉ giao hàng: %s\n"
+                        + "Số điện thoại liên hệ: %s\n\n"
+                        + "Chi tiết sản phẩm:\n%s\n"
+                        + "Tổng tiền: %d VND\n"
+                        + "Trạng thái thanh toán: %s\n\n"
+                        + "Ghi chú: %s\n\n"
+                        + "Chúng tôi sẽ liên hệ với bạn sớm để xác nhận đơn hàng.\n\n"
+                        + "Trân trọng,\nĐội ngũ hỗ trợ",
+                order.getUser().getFullName(),
+                order.getOrderCode(),
+                formattedDate,
+                order.getAddress(),
+                order.getPhone(),
+                productDetails.toString(),
+                order.getTotalPrice(),
+                order.isPaymentStatus() ? "Đã thanh toán" : "Chưa thanh toán",
+                order.getNote() != null ? order.getNote() : "Không có"
+        );
+
+        emailDetails.setMsgBody(msgBody);
+
+        // Gửi email
+        emailService.sendSimpleMail(emailDetails);
+    }
 
     @PreAuthorize("hasRole('USER')")
     public Order createOrder(OrderRequest request, Integer userId) {
@@ -73,7 +131,11 @@ public class OrderService {
         order.setUser(user);
         order.setOrderDetails(orderDetails);
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        sendOrderConfirmationEmail(savedOrder);
+
+        return savedOrder;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -82,7 +144,7 @@ public class OrderService {
                 new AppException(ErrorApp.ORDER_NOT_FOUND));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN') or #id == principal.claims['data']['id']")
     public Order getOrderByOrderCode(String orderCode) {
         return orderRepository.findByOrderCode(orderCode).orElseThrow(() ->
                 new AppException(ErrorApp.ORDER_NOT_FOUND));
@@ -119,5 +181,22 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
+    boolean existOrderByOrderCode(String orderCode) {
+        return orderRepository.findByOrderCode(orderCode) != null;
+    }
 
+
+    public Order paymentStatus(Order order, boolean paymentStatus) {
+        order.setPaymentStatus(paymentStatus);
+
+        return orderRepository.save(order);
+    }
+
+    public Order saveTxnRef(String orderCode, String txnRef) {
+        Order order = getOrderByOrderCode(orderCode);
+
+        order.setTxnRef(txnRef);
+
+        return orderRepository.save(order);
+    }
 }
