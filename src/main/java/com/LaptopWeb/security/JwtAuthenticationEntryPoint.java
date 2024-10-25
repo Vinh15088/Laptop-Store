@@ -15,7 +15,10 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     // call this method when authentication failure
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         AuthenticationException authException)
+            throws IOException, ServletException {
         ErrorApp errorApp = ErrorApp.UNAUTHENTICATED;
 
         response.setStatus(errorApp.getHttpStatusCode().value());
