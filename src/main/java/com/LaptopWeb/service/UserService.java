@@ -5,6 +5,7 @@ import com.LaptopWeb.dto.request.UpdateUserRequest;
 import com.LaptopWeb.entity.EmailDetails;
 import com.LaptopWeb.entity.Role;
 import com.LaptopWeb.entity.User;
+import com.LaptopWeb.enums.AuthProvider;
 import com.LaptopWeb.exception.AppException;
 import com.LaptopWeb.exception.ErrorApp;
 import com.LaptopWeb.mapper.UserMapper;
@@ -17,8 +18,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -54,6 +59,7 @@ public class UserService {
         // Mã hóa mật khẩu và thiết lập role
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(role);
+        user.setAuthProvider(AuthProvider.LOCAL);
 
         // Lưu user vào database
         User savedUser = userRepository.save(user);
@@ -84,6 +90,66 @@ public class UserService {
 
         return savedUser;
     }
+
+    public User createUserByGoogleOAuth2(OAuth2AuthenticationToken oAuth2AuthenticationToken) throws Exception{
+        OAuth2User oAuth2User = oAuth2AuthenticationToken.getPrincipal();
+        String email = oAuth2User.getAttribute("email");
+        String name = oAuth2User.getAttribute("name");
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        Role role = roleService.getRole("USER");
+
+        if(user == null) {
+            user = new User();
+
+            user.setRole(role);
+            user.setEmail(email);
+            user.setFullName(name);
+            user.setAuthProvider(AuthProvider.GOOGLE);
+
+            return userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    public User createUserByFacebookOAuth2(OAuth2AuthenticationToken oAuth2AuthenticationToken) throws Exception {
+        OAuth2User oAuth2User = oAuth2AuthenticationToken.getPrincipal();
+        String email = oAuth2User.getAttribute("email");
+        String name = oAuth2User.getAttribute("name");
+//        String username = email.split("@")[0];
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        Role role = roleService.getRole("USER");
+
+        if(user == null) {
+            user = new User();
+
+            user.setRole(role);
+            user.setEmail(email);
+            user.setFullName(name);
+            user.setAuthProvider(AuthProvider.FACEBOOK);
+//            user.setUsername(username);
+
+            return userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    public User createUserByOAuth2(OAuth2AuthenticationToken authToken) throws Exception {
+        String registrationId = authToken.getAuthorizedClientRegistrationId();
+
+        if ("google".equals(registrationId)) {
+            return createUserByGoogleOAuth2(authToken);
+        } else if ("facebook".equals(registrationId)) {
+            return createUserByFacebookOAuth2(authToken);
+        }
+        throw new IllegalArgumentException("Unsupported OAuth2 provider");
+    }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> getAll() {

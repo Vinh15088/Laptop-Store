@@ -1,5 +1,6 @@
 package com.LaptopWeb.entity;
 
+import com.LaptopWeb.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +25,9 @@ public class User {
 
     @Column(length = 64, nullable = false)
     String password;
+
+    @Enumerated(EnumType.STRING)
+    AuthProvider authProvider;
 
     @Column(name = "full_name", length = 64, unique = true, nullable = false)
     String fullName;

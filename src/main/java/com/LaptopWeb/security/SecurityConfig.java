@@ -24,10 +24,12 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
-            "/auth/login",
+            "/auth/login/**",
             "/auth/logout",
             "/auth/refresh",
-            "/auth/introspect"
+            "/auth/introspect",
+            "/payment/vn-pay/**",
+            "/email/**"
     };
 
     private CustomerDecoder customerDecoder;
@@ -51,6 +53,19 @@ public class SecurityConfig {
                         .requestMatchers("/brands/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/api/v1/auth/login")
+                        .defaultSuccessUrl("/auth/loginSuccess", true)
+                        .failureUrl("/auth/loginFailure")
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login/local")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
                 )
                 .exceptionHandling(customizer -> customizer
                         .accessDeniedHandler(customAccessDeniedHanlder())
