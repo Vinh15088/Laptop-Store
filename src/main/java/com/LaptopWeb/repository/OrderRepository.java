@@ -16,6 +16,15 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     Optional<Order> findByOrderCode(String orderCode);
 
+    Optional<Order> findByTransactionId(String transactionId);
+
+    boolean existsByOrderCode(String orderCode);
+
+    boolean existsByTransactionId(String transactionId);
+
+    @Query("SELECT COUNT(o) > 0 FROM  Order o WHERE o.orderCode = ?1 AND o.transactionId = ?2")
+    boolean existsByOrderCodeAndTransactionId(String orderCode, String transactionId);
+
     @Transactional
     @Modifying
     @Query("UPDATE Order o SET o.orderStatus = ?1 WHERE o.orderCode = ?2")
@@ -23,4 +32,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     @Query("SELECT o FROM Order o WHERE o.user.username = ?1")
     List<Order> getAllOrderByUser(String username);
+
+
 }
