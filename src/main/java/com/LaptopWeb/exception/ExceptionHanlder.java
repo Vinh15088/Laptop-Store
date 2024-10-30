@@ -62,4 +62,14 @@ public class ExceptionHanlder {
 
         return ResponseEntity.badRequest().body(apiResponse);
     }
+
+    @ExceptionHandler(value = IllegalAccessException.class)
+    ResponseEntity<ApiResponse<?>> handlingIllegalAccessException(IllegalAccessException exception) {
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(false)
+                .message(exception.getMessage())
+                .build();
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
 }

@@ -22,8 +22,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -166,6 +164,13 @@ public class UserService {
 
     public User getByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() ->
+                new AppException(ErrorApp.USER_NOTFOUND));
+
+        return user;
+    }
+
+    public User getByEmail(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() ->
                 new AppException(ErrorApp.USER_NOTFOUND));
 
         return user;

@@ -57,6 +57,8 @@ public enum ErrorApp {
     REVIEW_ACCESS_DENIED("Review access denied", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_REVIEW),
 
     ACCESS_DENIED("Access denied", HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED),
+
+    PAID_ORDER("Order paid", HttpStatus.BAD_REQUEST, ErrorCode.ERROR_ORDER),
     ;
 
 
