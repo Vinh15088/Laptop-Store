@@ -29,7 +29,9 @@ public class SecurityConfig {
             "/auth/refresh",
             "/auth/introspect",
             "/payment/vn-pay/**",
-            "/email/**"
+            "/email/**",
+            "/payment/zalo-pay/call-back",
+            "/auth/outbound/authentication",
     };
 
     private CustomerDecoder customerDecoder;

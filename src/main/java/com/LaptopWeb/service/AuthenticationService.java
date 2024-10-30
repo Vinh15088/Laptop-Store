@@ -1,17 +1,19 @@
 package com.LaptopWeb.service;
 
-import com.LaptopWeb.dto.request.IntrospectTokenRequest;
-import com.LaptopWeb.dto.request.LoginRequest;
-import com.LaptopWeb.dto.request.LogoutRequest;
-import com.LaptopWeb.dto.request.RefreshTokenRequest;
+import com.LaptopWeb.dto.request.*;
 import com.LaptopWeb.dto.response.AuthenticationResponse;
+import com.LaptopWeb.dto.response.httpClient.ExchangeTokenGoogleResponse;
 import com.LaptopWeb.dto.response.IntrospectTokenResponse;
 import com.LaptopWeb.entity.InvalidatedToken;
+import com.LaptopWeb.entity.Role;
 import com.LaptopWeb.entity.User;
+import com.LaptopWeb.enums.AuthProvider;
 import com.LaptopWeb.exception.AppException;
 import com.LaptopWeb.exception.ErrorApp;
 import com.LaptopWeb.repository.InvalidatedTokenRepository;
+import com.LaptopWeb.repository.httpClient.OutboundIdentityClientGoogle;
 import com.LaptopWeb.repository.UserRepository;
+import com.LaptopWeb.repository.httpClient.OutboundUserGoogleClient;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -46,9 +48,23 @@ public class AuthenticationService {
     @Value("${jwt.refreshable-duration}")
     private long REFRESHABLE_DURATION;
 
+    @Value("${outbound.identity.client-id}")
+    private String CLIENT_ID;
+
+    @Value("${outbound.identity.client-secret}")
+    private String CLIENT_SECRET;
+
+    @Value("${outbound.identity.redirect-uri}")
+    private String REDIRECT_URI;
+
+    private String GRANT_TYPE = "authorization_code";
+
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    UserService userService;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -56,17 +72,21 @@ public class AuthenticationService {
     @Autowired
     InvalidatedTokenRepository invalidatedTokenRepository;
 
+    @Autowired
+    OutboundIdentityClientGoogle outboundIdentityClientGoogle;
+
+    @Autowired
+    OutboundUserGoogleClient outboundUserGoogleClient;
+
 
     public AuthenticationResponse authenticationResponse(LoginRequest request) {
         User user = null;
 
         // check username or email for login
-        if(request.getEmail() == null) {
-            user = userRepository.findByUsername(request.getUsername()).orElseThrow(() ->
-                    new AppException(ErrorApp.USERNAME_NOT_EXISTED));
+        if(request.getUsername() != null) {
+            user = userService.getByUsername(request.getUsername());
         } else {
-            user = userRepository.findByEmail(request.getEmail()).orElseThrow(() ->
-                    new AppException(ErrorApp.EMAIL_EXISTED));
+            user = userService.getByEmail(request.getEmail());
         }
 
         // check password for login
@@ -84,6 +104,44 @@ public class AuthenticationService {
                     .token(token)
                     .build();
         } throw new AppException(ErrorApp.USER_NOTFOUND);
+    }
+
+    public AuthenticationResponse outboundAuthenticate(String code) {
+
+        ExchangeTokenGoogleRequest request = ExchangeTokenGoogleRequest.builder()
+                .code(code)
+                .clientId(CLIENT_ID)
+                .clientSecret(CLIENT_SECRET)
+                .redirectUri(REDIRECT_URI)
+                .grantType(GRANT_TYPE)
+                .build();
+
+        ExchangeTokenGoogleResponse response = outboundIdentityClientGoogle.exchangeToken(request);
+
+        log.info("Exchange token response: {}", response);
+
+        var userInfo = outboundUserGoogleClient.getUserInfo("json", response.getAccessToken());
+
+        log.info("Exchange user info: {}", userInfo);
+
+        User user = userRepository.findByUsername(userInfo.getEmail()).orElseGet(() ->
+                userRepository.save(User.builder()
+                                .username(userInfo.getEmail())
+                                .fullName(
+                                        userInfo.getFamilyName() != null ?
+                                                userInfo.getFamilyName() + " " + userInfo.getGivenName() :
+                                                userInfo.getGivenName())
+                                .authProvider(AuthProvider.GOOGLE)
+                                .role(Role.builder()
+                                        .name("USER")
+                                        .build())
+                        .build()));
+
+        String token = generateToken(user);
+
+        return AuthenticationResponse.builder()
+                .token(token)
+                .build();
     }
 
     // method create token from user
