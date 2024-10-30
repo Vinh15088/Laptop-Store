@@ -22,7 +22,7 @@ public class VNPayConfig {
     public static final String vnp_Locale = "vn";
     public static final String vnp_OrderType = "order-type";
     public static final String vnp_PayUrl = " https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static final String vnp_ReturnUrl = "https://localhost:8080/api/v1/payment";
+    public static final String vnp_ReturnUrl = "http://localhost:8080/api/v1/payment/vn-pay/call-back";
     public static final String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
     public static final String vnp_HashSecret = "FH0VS2A644L8TCPO3EXWB4L7QNDHT6UK";
 

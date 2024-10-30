@@ -1,6 +1,5 @@
 package com.LaptopWeb.controller;
 
-import com.LaptopWeb.dto.request.VNPayRequest;
 import com.LaptopWeb.dto.response.ApiResponse;
 import com.LaptopWeb.dto.response.VNPayResponse;
 import com.LaptopWeb.service.VNPayService;
@@ -15,7 +14,7 @@ public class VNPayController {
     @Autowired
     private VNPayService vnPayService;
 
-    @PostMapping("/{orderCode}/payment-order")
+    @GetMapping("/payment-order/{orderCode}")
     public ResponseEntity<?> paymentOrder(@PathVariable("orderCode") String orderCode) {
         VNPayResponse vnPayResponse = vnPayService.paymentOrder(orderCode);
 
@@ -29,9 +28,14 @@ public class VNPayController {
 
     @GetMapping("/call-back")
     public ResponseEntity<?> callBack(HttpServletRequest request) {
-        vnPayService.orderReturn(request);
+        VNPayResponse vnPayResponse = vnPayService.orderReturn(request);
 
-        return ResponseEntity.ok().body("OK");
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(vnPayResponse)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/IPN")

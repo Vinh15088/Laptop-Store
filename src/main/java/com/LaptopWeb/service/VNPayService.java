@@ -1,13 +1,16 @@
 package com.LaptopWeb.service;
 
 import com.LaptopWeb.config.VNPayConfig;
-import com.LaptopWeb.dto.request.VNPayRequest;
 import com.LaptopWeb.dto.response.VNPayResponse;
 import com.LaptopWeb.entity.Order;
+import com.LaptopWeb.enums.PaymentMethod;
+import com.LaptopWeb.exception.AppException;
+import com.LaptopWeb.exception.ErrorApp;
 import com.amazonaws.services.amplify.model.BadRequestException;
-import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import jakarta.servlet.http.HttpServletRequest;
+import net.minidev.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,7 @@ import java.util.TimeZone;
 @Service
 public class VNPayService {
 
+    private static final Logger log = LoggerFactory.getLogger(VNPayService.class);
     @Autowired
     private OrderService orderService;
 
@@ -31,34 +35,23 @@ public class VNPayService {
 
         Order order = orderService.getOrderByOrderCode(orderCode);
 
-        String vnp_Version = VNPayConfig.vnp_Version;
-        String vnp_Command = VNPayConfig.vnp_Command;
-        String vnp_TmnCode = VNPayConfig.vnp_TmnCode;
-        String vnp_Locale = VNPayConfig.vnp_Locale;
-        String vnp_OrderInfo = "Order code: " + order.getOrderCode();
-        String orderType = VNPayConfig.vnp_OrderType;
-        String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
-        String vnp_IpAddr = VNPayConfig.vnp_IpAddr;
-        String vnp_CurrCode = VNPayConfig.vnp_CurrCode;
-
-        int amount = (int) (order.getTotalPrice() * 100);
-
+        if(order.isPaymentStatus()) throw new AppException(ErrorApp.PAID_ORDER);
 
         Map vnp_Params = new HashMap<>();
-        vnp_Params.put("vnp_Version", vnp_Version);
-        vnp_Params.put("vnp_Command", vnp_Command);
-        vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
-        vnp_Params.put("vnp_Locale", vnp_Locale);
-        vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
-        vnp_Params.put("vnp_OrderType", orderType);
+        vnp_Params.put("vnp_Version", VNPayConfig.vnp_Version);
+        vnp_Params.put("vnp_Command", VNPayConfig.vnp_Command);
+        vnp_Params.put("vnp_TmnCode", VNPayConfig.vnp_TmnCode);
+        vnp_Params.put("vnp_Locale", VNPayConfig.vnp_Locale);
+        vnp_Params.put("vnp_OrderInfo", "Order code: " + order.getOrderCode());
+        vnp_Params.put("vnp_OrderType", VNPayConfig.vnp_OrderType);
 
+        String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        orderService.saveTxnRef(orderCode, vnp_TxnRef);
+        orderService.saveTransactionIdAndPaymentType(orderCode, vnp_TxnRef, PaymentMethod.VNPAY.getName());
 
-        vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
-        vnp_Params.put("vnp_Amount", String.valueOf(amount));
-        vnp_Params.put("vnp_CurrCode", vnp_CurrCode);
-
+        vnp_Params.put("vnp_IpAddr", VNPayConfig.vnp_IpAddr);
+        vnp_Params.put("vnp_Amount", String.valueOf(order.getTotalPrice() * 100));
+        vnp_Params.put("vnp_CurrCode", VNPayConfig.vnp_CurrCode);
 
 //        String bank_code = request.getBankCode();
 //        if (bank_code != null && !bank_code.isEmpty()) {
@@ -156,7 +149,6 @@ public class VNPayService {
     public VNPayResponse orderReturn(HttpServletRequest request) {
         VNPayResponse vnPayResponse = new VNPayResponse();
 
-
         try {
             Map fields = new HashMap();
             for (Enumeration params = request.getParameterNames(); params.hasMoreElements();) {
@@ -167,34 +159,29 @@ public class VNPayService {
                 }
             }
 
-            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
-            if (fields.containsKey("vnp_SecureHashType")) {
-                fields.remove("vnp_SecureHashType");
-            }
-            if (fields.containsKey("vnp_SecureHash")) {
-                fields.remove("vnp_SecureHash");
-            }
+            JSONObject callbackData = new JSONObject(fields);
+            log.info("callbackData: {} ", callbackData);
 
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+            if (fields.containsKey("vnp_SecureHashType")) fields.remove("vnp_SecureHashType");
+            if (fields.containsKey("vnp_SecureHash")) fields.remove("vnp_SecureHash");
 
             // Check checksum
             String signValue = VNPayConfig.hashAllFields(fields);
             if (signValue.equals(vnp_SecureHash)) {
-
-//                boolean checkOrderId = true; // vnp_TxnRef exists in your database
-//                boolean checkAmount = true; // vnp_Amount is valid (Check vnp_Amount VNPAY returns compared to theamount of the code (vnp_TxnRef) in the Your database).
-//                boolean checkOrderStatus = true; // PaymnentStatus = 0 (pending)
-
                 String vnp_TxnRef = request.getParameter("vnp_TxnRef");
                 String vnp_OrderInfo = request.getParameter("vnp_OrderInfo");
                 int amount = Integer.parseInt(request.getParameter("vnp_Amount"))/100;
 
                 String orderCode = vnp_OrderInfo.substring(12);
-                Order order = orderService.getOrderByOrderCode(orderCode);
+
+                log.info(orderCode);
 
 
-                boolean checkOrderId = orderService.existOrderByOrderCode(orderCode);
-                if(checkOrderId && vnp_TxnRef.equals(order.getTxnRef())) {
+                if(orderService.existsOrderByOrderCodeAndTransactionId(orderCode, vnp_TxnRef)) {
 
+                    Order order = orderService.getOrderByOrderCode(orderCode);
+                    order = orderService.saveCallbackPayment(order, callbackData.toString());
                     if(amount == order.getTotalPrice()) {
 
                         boolean paymentStatus = order.isPaymentStatus();
@@ -229,7 +216,6 @@ public class VNPayService {
             vnPayResponse.setRspCode("99");
             vnPayResponse.setMessage("Unknown error");
         }
-
 
         return vnPayResponse;
     }

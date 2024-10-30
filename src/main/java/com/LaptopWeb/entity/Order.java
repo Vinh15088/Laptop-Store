@@ -40,7 +40,10 @@ public class Order {
 
     String paymentType;
 
-    String txnRef;
+    String transactionId; // transactionId
+
+    @Column(columnDefinition = "json")
+    String callbackPayment;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

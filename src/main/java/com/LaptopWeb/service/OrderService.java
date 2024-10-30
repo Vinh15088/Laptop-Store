@@ -181,10 +181,22 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
-    boolean existOrderByOrderCode(String orderCode) {
-        return orderRepository.findByOrderCode(orderCode) != null;
+    public boolean existOrderByOrderCode(String orderCode) {
+        return orderRepository.existsByOrderCode(orderCode);
     }
 
+    public boolean existsByTransactionId(String transactionId) {
+        return orderRepository.existsByTransactionId(transactionId);
+    }
+
+    public Order getOrderByTransactionId(String transactionId) {
+        return orderRepository.findByTransactionId(transactionId).orElseThrow(() ->
+                new AppException(ErrorApp.ORDER_NOT_FOUND));
+    }
+
+    public boolean existsOrderByOrderCodeAndTransactionId(String orderCode, String transactionId) {
+        return orderRepository.existsByOrderCodeAndTransactionId(orderCode, transactionId);
+    }
 
     public Order paymentStatus(Order order, boolean paymentStatus) {
         order.setPaymentStatus(paymentStatus);
@@ -192,10 +204,17 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public Order saveTxnRef(String orderCode, String txnRef) {
+    public Order saveTransactionIdAndPaymentType(String orderCode, String transactionId, String paymentType) {
         Order order = getOrderByOrderCode(orderCode);
 
-        order.setTxnRef(txnRef);
+        order.setTransactionId(transactionId);
+        order.setPaymentType(paymentType);
+
+        return orderRepository.save(order);
+    }
+
+    public Order saveCallbackPayment(Order order, String callbackData) {
+        order.setCallbackPayment(callbackData);
 
         return orderRepository.save(order);
     }
