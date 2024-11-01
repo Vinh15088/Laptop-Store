@@ -1,2 +1,2 @@
-# Laptop-Store
+# E-commerce
 Using Spring Boot, React
