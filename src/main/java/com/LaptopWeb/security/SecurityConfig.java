@@ -31,7 +31,7 @@ public class SecurityConfig {
             "/payment/vn-pay/**",
             "/email/**",
             "/payment/zalo-pay/call-back",
-            "/auth/outbound/authentication",
+            "/auth/outbound/**",
     };
 
     private CustomerDecoder customerDecoder;
