@@ -37,9 +37,19 @@ public class AuthenticationController {
         return apiResponse;
     }
 
-    @PostMapping("/outbound/authentication")
-    public ApiResponse<?> outboundAuthentication(@RequestParam("code") String code) {
-        var result = authenticationService.outboundAuthenticate(code);
+    @PostMapping("/outbound/google/authentication")
+    public ApiResponse<?> outboundAuthenticationGoogle(@RequestParam("code") String code) {
+        var result = authenticationService.outboundAuthenticateGoogle(code);
+
+        return ApiResponse.builder()
+                .success(true)
+                .content(result)
+                .build();
+    }
+
+    @PostMapping("/outbound/facebook/authentication")
+    public ApiResponse<?> outboundAuthenticationFacebook(@RequestParam("code") String code) {
+        var result = authenticationService.outboundAuthenticateFacebook(code);
 
         return ApiResponse.builder()
                 .success(true)

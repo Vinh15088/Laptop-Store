@@ -2,6 +2,7 @@ package com.LaptopWeb.service;
 
 import com.LaptopWeb.dto.request.*;
 import com.LaptopWeb.dto.response.AuthenticationResponse;
+import com.LaptopWeb.dto.response.httpClient.ExchangeTokenFacebookResponse;
 import com.LaptopWeb.dto.response.httpClient.ExchangeTokenGoogleResponse;
 import com.LaptopWeb.dto.response.IntrospectTokenResponse;
 import com.LaptopWeb.entity.InvalidatedToken;
@@ -11,8 +12,10 @@ import com.LaptopWeb.enums.AuthProvider;
 import com.LaptopWeb.exception.AppException;
 import com.LaptopWeb.exception.ErrorApp;
 import com.LaptopWeb.repository.InvalidatedTokenRepository;
+import com.LaptopWeb.repository.httpClient.OutboundIdentityClientFacebook;
 import com.LaptopWeb.repository.httpClient.OutboundIdentityClientGoogle;
 import com.LaptopWeb.repository.UserRepository;
+import com.LaptopWeb.repository.httpClient.OutboundUserFacebookClient;
 import com.LaptopWeb.repository.httpClient.OutboundUserGoogleClient;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -48,14 +51,24 @@ public class AuthenticationService {
     @Value("${jwt.refreshable-duration}")
     private long REFRESHABLE_DURATION;
 
-    @Value("${outbound.identity.client-id}")
-    private String CLIENT_ID;
+    @Value("${outbound.identity.google.client-id}")
+    private String GOOGLE_CLIENT_ID;
 
-    @Value("${outbound.identity.client-secret}")
-    private String CLIENT_SECRET;
+    @Value("${outbound.identity.google.client-secret}")
+    private String GOOGLE_CLIENT_SECRET;
 
-    @Value("${outbound.identity.redirect-uri}")
-    private String REDIRECT_URI;
+    @Value("${outbound.identity.google.redirect-uri}")
+    private String GOOGLE_REDIRECT_URI;
+
+    @Value("${outbound.identity.facebook.client-id}")
+    private String FACEBOOK_CLIENT_ID;
+
+    @Value("${outbound.identity.facebook.client-secret}")
+    private String FACEBOOK_CLIENT_SECRET;
+
+    @Value("${outbound.identity.facebook.redirect-uri}")
+    private String FACEBOOK_REDIRECT_URI;
+
 
     private String GRANT_TYPE = "authorization_code";
 
@@ -77,6 +90,12 @@ public class AuthenticationService {
 
     @Autowired
     OutboundUserGoogleClient outboundUserGoogleClient;
+
+    @Autowired
+    OutboundIdentityClientFacebook outboundIdentityClientFacebook;
+
+    @Autowired
+    OutboundUserFacebookClient outboundUserFacebookClient;
 
 
     public AuthenticationResponse authenticationResponse(LoginRequest request) {
@@ -106,13 +125,12 @@ public class AuthenticationService {
         } throw new AppException(ErrorApp.USER_NOTFOUND);
     }
 
-    public AuthenticationResponse outboundAuthenticate(String code) {
-
+    public AuthenticationResponse outboundAuthenticateGoogle(String code) {
         ExchangeTokenGoogleRequest request = ExchangeTokenGoogleRequest.builder()
                 .code(code)
-                .clientId(CLIENT_ID)
-                .clientSecret(CLIENT_SECRET)
-                .redirectUri(REDIRECT_URI)
+                .clientId(GOOGLE_CLIENT_ID)
+                .clientSecret(GOOGLE_CLIENT_SECRET)
+                .redirectUri(GOOGLE_REDIRECT_URI)
                 .grantType(GRANT_TYPE)
                 .build();
 
@@ -141,6 +159,27 @@ public class AuthenticationService {
 
         return AuthenticationResponse.builder()
                 .token(token)
+                .build();
+    }
+
+    public AuthenticationResponse outboundAuthenticateFacebook(String code) {
+        ExchangeTokenFacebookRequest request = ExchangeTokenFacebookRequest.builder()
+                .code(code)
+                .clientId(FACEBOOK_CLIENT_ID)
+                .clientSecret(FACEBOOK_CLIENT_SECRET)
+                .redirectUri(FACEBOOK_REDIRECT_URI)
+                .build();
+
+        ExchangeTokenFacebookResponse response = outboundIdentityClientFacebook.exchangeToken(request);
+
+        log.info("Exchange token response: {}", response);
+
+        var userInfo = outboundUserFacebookClient.getUserInfo("json", response.getAccessToken());
+
+        log.info("Exchange user info: {}", userInfo);
+
+        return AuthenticationResponse.builder()
+                .token(response.getAccessToken())
                 .build();
     }
 
