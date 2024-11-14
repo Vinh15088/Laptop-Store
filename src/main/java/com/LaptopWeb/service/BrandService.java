@@ -7,6 +7,10 @@ import com.LaptopWeb.exception.ErrorApp;
 import com.LaptopWeb.mapper.BrandMapper;
 import com.LaptopWeb.repository.BrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,6 +66,16 @@ public class BrandService {
                 new AppException(ErrorApp.BRAND_NOT_FOUND));
 
         return brands;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<Brand> getPageBrand(Integer pageNum, Integer size, String sortField, String keyWord) {
+        Sort sort = sortField != null ? Sort.by(sortField).ascending() : Sort.unsorted();
+
+        Pageable pageable = PageRequest.of(pageNum, size, sort);
+
+        if(keyWord == null) return brandRepository.findAll(pageable);
+        else return brandRepository.findAllBrand(keyWord, pageable);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
