@@ -7,8 +7,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -71,6 +70,33 @@ public class AwsS3Service {
 
             // delete obj from s3
             amazonS3.deleteObject(BUCKET_NAME, urlFile);
+
+            System.out.println("delete success");
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new Exception("Unable to upload image to s3 bucket: " + e.getMessage());
+        }
+    }
+
+    public void deleteImageFromS3Folder(String folder) throws Exception {
+        try {
+            // get list of object in folder
+            ListObjectsV2Request listObjectsV2Request = new ListObjectsV2Request()
+                    .withBucketName(BUCKET_NAME)
+                    .withPrefix(folder + "/");
+
+            ListObjectsV2Result result;
+
+            do {
+                result = amazonS3.listObjectsV2(listObjectsV2Request);
+
+                // delete object in folder
+                for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
+                    amazonS3.deleteObject(BUCKET_NAME, objectSummary.getKey());
+                }
+
+                listObjectsV2Request.setContinuationToken(result.getNextContinuationToken());
+            } while (result.isTruncated());
 
             System.out.println("delete success");
         } catch (RuntimeException e) {
