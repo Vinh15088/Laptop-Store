@@ -107,10 +107,10 @@ public class BrandController {
     public ResponseEntity<ApiResponse<?>> getBrandPage(
             @RequestParam(name = "pageNumber", defaultValue = PAGE_NUMBER) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = PAGE_SIZE) Integer pageSize,
-            @RequestParam(name = "sortField") String sortFiel,
+            @RequestParam(name = "sortField") String sortField,
             @RequestParam(name = "keyWord") String keyWord
     ) {
-        Page<Brand> page = brandService.getPageBrand(pageNumber-1, pageSize, sortFiel, keyWord);
+        Page<Brand> page = brandService.getPageBrand(pageNumber-1, pageSize, sortField, keyWord);
 
         List<Brand> brands = page.getContent();
         List<BrandResponse> listBrandResponse = brands.stream().map(brandMapper::toBrandResponse).toList();
