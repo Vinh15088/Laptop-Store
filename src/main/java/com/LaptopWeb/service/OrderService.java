@@ -121,7 +121,8 @@ public class OrderService {
                     OrderDetail orderDetail = orderDetailMapper.toOrderDetail(detailRequest);
                     orderDetail.setOrder(order);
                     orderDetail.setProduct(product);
-                    orderDetail.setTotalPrice(detailRequest.getUnitPrice() * detailRequest.getQuantity());
+                    orderDetail.setUnitPrice(Math.toIntExact(product.getCost()));
+                    orderDetail.setTotalPrice((int) (product.getCost() * detailRequest.getQuantity()));
 
                     return orderDetail;
                 }
@@ -130,12 +131,22 @@ public class OrderService {
         order.setOrderStatus(orderStatus);
         order.setUser(user);
         order.setOrderDetails(orderDetails);
+        long totalPrice = 0;
+        for (OrderDetail orderDetail : orderDetails) {
+            totalPrice += orderDetail.getTotalPrice();
+        }
+        order.setTotalPrice(totalPrice);
 
         Order savedOrder = orderRepository.save(order);
 
         sendOrderConfirmationEmail(savedOrder);
 
         return savedOrder;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Order> getOrderByUserId(Integer id) {
+        return orderRepository.findByUserId(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -156,12 +167,13 @@ public class OrderService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<Order> getAllOrders(Integer number, Integer size, String sortBy, String order) {
+    public Page<Order> getAllOrders(Integer number, Integer size, String sortBy, String order,
+                                    String keyWord, String status, String method) {
         Sort sort = Sort.by(Sort.Direction.valueOf(order.toUpperCase()), sortBy);
 
         Pageable pageable = PageRequest.of(number, size, sort);
 
-        return orderRepository.findAll(pageable);
+        return orderRepository.findAll(keyWord, status, method, pageable);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

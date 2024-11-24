@@ -3,9 +3,12 @@ package com.LaptopWeb.repository;
 import com.LaptopWeb.entity.Order;
 import com.LaptopWeb.entity.OrderStatus;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,6 +18,8 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     Optional<Order> findByOrderCode(String orderCode);
+
+    List<Order> findByUserId(int userId);
 
     Optional<Order> findByTransactionId(String transactionId);
 
@@ -32,6 +37,19 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     @Query("SELECT o FROM Order o WHERE o.user.username = ?1")
     List<Order> getAllOrderByUser(String username);
+
+    @Query("SELECT DISTINCT o FROM Order o " +
+            "LEFT JOIN o.orderStatus oS " +
+            "LEFT JOIN o.user u " +
+            "WHERE (:keyWord IS NULL OR " +
+            "(u.username LIKE %:keyWord% OR " +
+            "u.fullName LIKE %:keyWord%)) " +
+            "AND (:status IS NULL OR oS.name = :status) " +
+            "AND (:method IS NULL OR o.paymentType = :method)")
+    Page<Order> findAll(@Param("keyWord") String keyword,
+                        @Param("status") String status,
+                        @Param("method") String method,
+                        Pageable pageable);
 
 
 }

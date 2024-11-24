@@ -7,6 +7,7 @@ import com.LaptopWeb.dto.response.OrderDetailResponse;
 import com.LaptopWeb.dto.response.OrderResponse;
 import com.LaptopWeb.entity.Order;
 import com.LaptopWeb.entity.OrderDetail;
+import com.LaptopWeb.entity.OrderStatus;
 import com.LaptopWeb.mapper.OrderDetailMapper;
 import com.LaptopWeb.mapper.OrderMapper;
 import com.LaptopWeb.service.OrderService;
@@ -82,6 +83,20 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    @GetMapping("/userId/{id}")  /*checked success*/
+    public ResponseEntity<?> getOrderByUserId(@PathVariable("id") Integer id) {
+        List<Order> orders = orderService.getOrderByUserId(id);
+
+        List<OrderResponse> orderResponses = orders.stream().map(this::orderToOrderResponse).toList();
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(orderResponses)
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
     @GetMapping("/id/{id}")  /*checked success*/
     public ResponseEntity<?> getOrderById(@PathVariable("id") Integer id) {
         Order order = orderService.getOrderById(id);
@@ -115,9 +130,12 @@ public class OrderController {
             @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
             @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
             @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
-            @RequestParam(name = "order", defaultValue = "desc") String order
+            @RequestParam(name = "order", defaultValue = "desc") String order,
+            @RequestParam(name = "keyWord", required = false) String keyWord,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "method", required = false) String method
     ) {
-        Page<Order> orderPage = orderService.getAllOrders(number-1, size, sortBy, order);
+        Page<Order> orderPage = orderService.getAllOrders(number-1, size, sortBy, order, keyWord, status, method);
 
         List<Order> orders = orderPage.getContent();
         List<OrderResponse> orderResponses = orders.stream().map(orderMapper::toOrderResponse).toList();
@@ -139,7 +157,7 @@ public class OrderController {
     }
 
 
-    @PutMapping("/code/{orderCode}/change-status") /*checked success*/
+    @PutMapping("/change-status/{orderCode}") /*checked success*/
     public ResponseEntity<?> updateOrder(
             @PathVariable String orderCode,
             @RequestPart("changeOrderStatus") ChangeOrderStatusRequest request
@@ -161,8 +179,6 @@ public class OrderController {
         Map<String, Object> data = (Map<String, Object>) jwt.getClaim("data");
 
         String username = (String) data.get("username");
-
-//        System.out.println(username);
 
         List<Order> orders = orderService.getMyOrder(username);
 
