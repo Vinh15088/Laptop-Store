@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,16 +27,16 @@ public class ProductController {
     @Autowired
     private ProductMapper productMapper;
 
-    private static final String PAGE_SIZE = "20";
+    private static final String PAGE_SIZE = "10";
     private static final String PAGE_NUMBER = "1";
 
     @PostMapping /*checked success*/
     public ResponseEntity<?> createProduct(
             @Valid
             @RequestPart("product") ProductRequest request,
-            @RequestPart("image")MultipartFile image
+            @RequestPart("images") List<MultipartFile> images
             ) throws Exception {
-        Product product = productService.createProduct(request, image);
+        Product product = productService.createProduct(request, images);
 
         ProductResponse productResponse = productMapper.toProductResponse(product);
 
@@ -69,6 +70,40 @@ public class ProductController {
         @RequestParam(name = "order", defaultValue = "asc") String order
     ) {
         Page<Product> productPage = productService.getAllProduct(number-1, size, sortBy, order);
+
+        List<Product> products = productPage.getContent();
+        List<ProductResponse> productResponses = products.stream().map(productMapper::toProductResponse).toList();
+
+        PageInfo pageInfo = PageInfo.builder()
+                .page(productPage.getNumber()+1)
+                .size(productPage.getSize())
+                .totalElements(productPage.getNumberOfElements())
+                .totalPages(productPage.getTotalPages())
+                .build();
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(productResponses)
+                .pageInfo(pageInfo)
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @GetMapping("/allPage") /*checked success*/
+    public ResponseEntity<?> getPageProduct(
+            @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
+            @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,
+            @RequestParam(name = "sortBy", defaultValue = "id") String sortBy,
+            @RequestParam(name = "order", defaultValue = "asc") String order,
+            @RequestParam(name = "keyWord", required = false) String keyWord,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "brand", required = false) String brand,
+            @RequestParam(name = "minPrice", required = false) Long minPrice,
+            @RequestParam(name = "maxPrice", required = false) Long maxPrice
+    ) {
+        Page<Product> productPage = productService.getPageProduct(number-1, size, sortBy, order,
+                keyWord, category, brand, minPrice, maxPrice);
 
         List<Product> products = productPage.getContent();
         List<ProductResponse> productResponses = products.stream().map(productMapper::toProductResponse).toList();
@@ -179,9 +214,13 @@ public class ProductController {
     public ResponseEntity<?> updateProduct(
             @PathVariable("id") Integer id,
             @RequestPart(name = "product", required = false) ProductRequest request,
-            @RequestPart(name = "image", required = false) MultipartFile image
+            @RequestPart(name = "newImages", required = false) List<MultipartFile> newImages
     ) throws Exception {
-        Product product = productService.updateProduct(id, request, image);
+        if (newImages == null) {
+            newImages = new ArrayList<>();
+        }
+
+        Product product = productService.updateProduct(id, request, newImages);
 
         ProductResponse productResponse = productMapper.toProductResponse(product);
 

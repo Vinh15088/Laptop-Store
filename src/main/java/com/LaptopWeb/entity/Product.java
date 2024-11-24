@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -42,7 +44,8 @@ public class Product {
 
     Double rating;
 
-    String image;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<ProductImage> images = new ArrayList<>();
 
     @Column(columnDefinition = "json")
     String productDetails;
@@ -54,5 +57,4 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "brand_id")
     Brand brand;
-
 }
