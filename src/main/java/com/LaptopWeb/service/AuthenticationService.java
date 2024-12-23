@@ -142,9 +142,13 @@ public class AuthenticationService {
 
         log.info("Exchange user info: {}", userInfo);
 
-        User user = userRepository.findByUsername(userInfo.getEmail()).orElseGet(() ->
+        String username = userInfo.getEmail().split("@")[0];
+
+        User user = userRepository.findByUsername(username).filter(existingUser ->
+                existingUser.getEmail().equals(userInfo.getEmail())).orElseGet(() ->
                 userRepository.save(User.builder()
-                                .username(userInfo.getEmail())
+                                .username(username)
+                                .email(userInfo.getEmail())
                                 .fullName(
                                         userInfo.getFamilyName() != null ?
                                                 userInfo.getFamilyName() + " " + userInfo.getGivenName() :
@@ -190,6 +194,8 @@ public class AuthenticationService {
         dataUser.put("id", user.getId());
         dataUser.put("username", user.getUsername());
         dataUser.put("email", user.getEmail());
+        dataUser.put("fullName", user.getFullName());
+        dataUser.put("phone", user.getPhoneNumber());
 
         // create jwt header with hs512 signing algorith
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
