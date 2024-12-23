@@ -65,32 +65,20 @@ public class ReviewController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/byRating/{productId}") /*checked success*/
+    @GetMapping("/byProduct") /*checked success*/
     public ResponseEntity<?> getReviewByRating(
-            @PathVariable(name = "productId") Integer productId,
+            @RequestParam(name = "productId") Integer productId,
             @RequestParam(name = "rating", required = false) Integer rating,
-            @RequestParam(name = "number", defaultValue = SLICE_NUMBER) Integer number,
-            @RequestParam(name = "size", defaultValue = SLICE_SIZE) Integer size,
             @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
             @RequestParam(name = "order", defaultValue = "desc") String order
     ) {
-        Slice<Review> slice = reviewService.getByRatingAndProduct(rating, productId, number-1, size, sortBy, order);
+        List<Review> list = reviewService.getByRatingAndProduct(rating, productId, sortBy, order);
 
-        PageInfo pageInfo = PageInfo.builder()
-                .page(slice.getNumber() + 1)
-                .size(slice.getSize())
-                .totalElements(slice.getNumberOfElements())
-                .hasNext(slice.hasNext())
-                .build();
-
-        List<Review> reviews = slice.getContent();
-
-        List<ReviewResponse> reviewResponses = reviews.stream().map(reviewMapper::toReviewResponse).toList();
+        List<ReviewResponse> reviewResponses = list.stream().map(reviewMapper::toReviewResponse).toList();
 
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(true)
                 .content(reviewResponses)
-                .pageInfo(pageInfo)
                 .build();
 
         return ResponseEntity.ok().body(apiResponse);

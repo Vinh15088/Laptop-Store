@@ -16,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ReviewService {
 
@@ -62,16 +64,13 @@ public class ReviewService {
         return reviewRepository.findByUserAndProduct(user, product);
     }
 
-    public Slice<Review> getByRatingAndProduct(
-            Integer rating, Integer productId, Integer number, Integer size, String sortBy, String order) {
+    public List<Review> getByRatingAndProduct(Integer rating, Integer productId, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.valueOf(order.toUpperCase()), sortBy);
 
-        Pageable pageable = PageRequest.of(number, size, sort);
-
         if(rating == null) {
-            return reviewRepository.findByProduct(productId, pageable);
+            return reviewRepository.findByProduct(productId, sort);
         } else {
-            return reviewRepository.findByRatingAndProduct(rating, productId, pageable);
+            return reviewRepository.findByRatingAndProduct(rating, productId, sort);
         }
     }
 
