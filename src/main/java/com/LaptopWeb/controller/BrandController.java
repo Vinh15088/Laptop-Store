@@ -62,6 +62,20 @@ public class BrandController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    @GetMapping("/name") /*checked success*/
+    public ResponseEntity<ApiResponse<?>> getBrandById(@RequestParam("brandName") String brandName) {
+        Brand brand = brandService.getByName(brandName);
+
+        BrandResponse brandResponse = brandMapper.toBrandResponse(brand);
+
+        ApiResponse apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(brandResponse)
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
 //    @GetMapping /*checked success*/
 //    public ResponseEntity<ApiResponse<?>> getBrandByKeyOfName(@RequestParam(name = "name", required = false) String name) {
 //        if(name != null && !name.isEmpty()) {

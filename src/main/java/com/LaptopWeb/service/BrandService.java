@@ -61,8 +61,15 @@ public class BrandService {
         return brand;
     }
 
+    public Brand getByName(String brandName) {
+        Brand brand = brandRepository.findByName(brandName).orElseThrow(() ->
+                new AppException(ErrorApp.BRAND_NOT_FOUND));
+
+        return brand;
+    }
+
     public List<Brand> getByKeyOfName(String name) {
-        List<Brand> brands = (List<Brand>) brandRepository.findByName(name).orElseThrow(() ->
+        List<Brand> brands = (List<Brand>) brandRepository.findListByName(name).orElseThrow(() ->
                 new AppException(ErrorApp.BRAND_NOT_FOUND));
 
         return brands;

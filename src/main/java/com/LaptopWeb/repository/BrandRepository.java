@@ -14,9 +14,11 @@ import java.util.Optional;
 public interface BrandRepository extends JpaRepository<Brand, Integer> {
     boolean existsByName(String name);
 
+    Optional<Brand> findByName(String name);
+
     @Query("SELECT b FROM Brand b WHERE LOWER(b.name) " +
             "LIKE LOWER(CONCAT('%', :name, '%'))")
-    Optional<List<Brand>> findByName(String name);
+    Optional<List<Brand>> findListByName(String name);
 
     @Query("SELECT b FROM Brand b WHERE b.name LIKE %?1%")
     Page<Brand> findAllBrand(String keyWord,Pageable pageable);
