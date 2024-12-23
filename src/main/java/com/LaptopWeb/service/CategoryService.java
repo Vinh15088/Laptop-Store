@@ -45,8 +45,6 @@ public class CategoryService {
     }
 
     public Category getCategoryById(Integer categoryId) {
-        System.out.println(categoryRepository.findById(categoryId));
-
         return categoryRepository.findById(categoryId).orElseThrow(() ->
                 new AppException(ErrorApp.CATEGORY_NOT_FOUND));
     }

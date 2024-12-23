@@ -5,6 +5,7 @@ import com.LaptopWeb.dto.response.CartItemResponse;
 import com.LaptopWeb.dto.response.CartResponse;
 import com.LaptopWeb.entity.Cart;
 import com.LaptopWeb.entity.CartItem;
+import com.LaptopWeb.entity.ProductImage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {CartItemMapper.class})
 public interface CartMapper {
@@ -28,7 +30,7 @@ public interface CartMapper {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode user = mapper.createObjectNode();
 
-        user.put("id", cart.getUser().getId());
+        user.put("userId", cart.getUser().getId());
         user.put("username", cart.getUser().getUsername());
 
         return user;
@@ -38,13 +40,21 @@ public interface CartMapper {
         ObjectMapper mapper = new ObjectMapper();
         List<JsonNode> cartItemResponses = new ArrayList<>();
 
+        String baseUrl = "https://ecommerce-vinhseo.s3.ap-southeast-2.amazonaws.com/products/";
+
         List<CartItem> cartItems = cart.getCartItems();
 
         for (CartItem cartItem : cartItems) {
             ObjectNode node = mapper.createObjectNode();
 
-            node.put("id", cartItem.getProduct().getId());
+            node.put("productId", cartItem.getProduct().getId());
             node.put("name", cartItem.getProduct().getName());
+
+            List<String> imageUrls = cartItem.getProduct().getImages().stream()
+                    .map(image ->baseUrl + image.getProduct().getId() + "/" + image.getUrl())
+                    .collect(Collectors.toList());
+            node.put("images", mapper.valueToTree(imageUrls));
+
             node.put("unitPrice", cartItem.getProduct().getPrice());
             node.put("quantity", cartItem.getQuantity());
             node.put("unitCost", cartItem.getProduct().getCost());

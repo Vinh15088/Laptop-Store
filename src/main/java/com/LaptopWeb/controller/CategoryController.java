@@ -84,6 +84,20 @@ public class CategoryController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    @GetMapping("/name") /*checked success*/
+    public ResponseEntity<ApiResponse<?>> getByName(@RequestParam("categoryName") String categoryName) {
+        Category category = categoryService.getByName(categoryName);
+
+        CategoryResponse categoryResponse = categoryMapper.toCategoryResponse(category);
+
+        ApiResponse apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(categoryResponse)
+                .build();
+
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
     @GetMapping("/all") /*checked success*/
     public ResponseEntity<ApiResponse<?>> getAll() {
         List<Category> categories = categoryService.getAll();

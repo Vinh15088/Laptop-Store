@@ -66,7 +66,7 @@ public class CartController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @PutMapping("/{cartId}/change-quantity") /*checked success*/
+    @PutMapping("/change-quantity/{cartId}") /*checked success*/
     public ResponseEntity<?> changeQuantity(
             @PathVariable("cartId") Integer cartId,
             @RequestBody CartItemRequest request,

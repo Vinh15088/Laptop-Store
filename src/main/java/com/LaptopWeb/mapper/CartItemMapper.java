@@ -24,7 +24,8 @@ public interface CartItemMapper {
 
         ObjectNode node = mapper.createObjectNode();
 
-        node.put("id", cartItem.getProduct().getId());
+        node.put("productId", cartItem.getProduct().getId());
+        node.put("images", cartItem.getProduct().getImages().toString());
         node.put("name", cartItem.getProduct().getName());
         node.put("unitPrice", cartItem.getProduct().getPrice());
         node.put("quantity", cartItem.getQuantity());
