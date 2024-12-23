@@ -11,19 +11,14 @@ import com.LaptopWeb.mapper.ProductMapper;
 import com.LaptopWeb.repository.ProductImageRepository;
 import com.LaptopWeb.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Service
 @EnableMethodSecurity
@@ -94,6 +89,10 @@ public class ProductService {
                 new AppException(ErrorApp.PRODUCT_NOT_FOUND));
     }
 
+    public Product getProductByName(String name) {
+        return productRepository.findByName(name);
+    }
+
     public Page<Product> getAllProduct(Integer number, Integer size, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.valueOf(order.toUpperCase()), sortBy);
 
@@ -111,12 +110,61 @@ public class ProductService {
         return productRepository.findPageProduct(keyWord, category, brand, minPrice, maxPrice, pageable);
     }
 
-    public Page<Product> getAllProductByCategory(Integer categoryId, Integer number, Integer size, Long minPrice, Long maxPrice) {
+    public Page<Product> getAllPageProductByCategoryAndBrandId(Integer number, Integer size, Integer categoryId,
+                                                               Integer brandId, Long minPrice, Long maxPrice) {
+        Pageable pageable = PageRequest.of(number, size);
+        Category category = categoryService.getCategoryById(categoryId);
+        Set<Category> categories = category.getChildren();
+
+        if(categories != null && categories.size() > 0) {
+            List<Page<Product>> productPages = new ArrayList<>();
+            for(Category c: categories) {
+                System.out.println(c.getId());
+                Page<Product> page = productRepository.findAllPageWithCategoryIdAndBrandId(c.getId(), brandId,
+                        minPrice, maxPrice, pageable);
+                productPages.add(page);
+            }
+            return mergePages(productPages, pageable);
+        } else {
+            return productRepository.findAllPageWithCategoryIdAndBrandId(categoryId, brandId, minPrice, maxPrice, pageable);
+        }
+    }
+
+    private Page<Product> mergePages(List<Page<Product>> pageProducts, Pageable pageable) {
+        List<Product> allProducts = new ArrayList<>();
+        for (Page<Product> page : pageProducts) {
+            allProducts.addAll(page.getContent());
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allProducts.size());
+
+        if (start >= allProducts.size()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, allProducts.size());
+        }
+
+        List<Product> pagedProducts = allProducts.subList(start, end);
+
+        return new PageImpl<>(pagedProducts, pageable, allProducts.size());
+    }
+
+    public List<Product> getAllProductByCategoryAndBrandId(Integer categoryId, Integer brandId, Long minPrice, Long maxPrice) {
+        List<Product> products = new ArrayList<>();
         Category category = categoryService.getCategoryById(categoryId);
 
-        Pageable pageable = PageRequest.of(number, size);
+        Set<Category> categories = category.getChildren();
 
-        return productRepository.findAllWithCategoryId(categoryId, minPrice, maxPrice, pageable);
+        if(categories != null && categories.size() > 0) {
+            for(Category c: categories) {
+                System.out.println(c.getId());
+                products.addAll(productRepository.findAllWithCategoryIdAndBrandId(c.getId(), brandId, minPrice, maxPrice));
+            }
+            System.out.println(products.size());
+        } else {
+            products.addAll(productRepository.findAllWithCategoryIdAndBrandId(categoryId, brandId, minPrice, maxPrice));
+        }
+
+        return products;
     }
 
     public Page<Product> getAllProductByBrand(Integer brandId, Integer number, Integer size, Long minPrice, Long maxPrice) {
@@ -133,6 +181,10 @@ public class ProductService {
         return (keyword != null && !keyword.isEmpty())
                 ? productRepository.findAll(keyword, pageable)
                 : productRepository.findAll(pageable);
+    }
+
+    public List<Product> getProductWithKeywordAll(String keyword) {
+        return (keyword != null && !keyword.isEmpty()) ? productRepository.findAllProduct(keyword) : null;
     }
 
     public List<Product> getProductsByIds(List<Integer> productIds) {
@@ -214,7 +266,7 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN') or #id == principal.claims['data']['id']")
     public Product addProductStock(Integer id, int stock) {
         Product product = getProductById(id);
 
