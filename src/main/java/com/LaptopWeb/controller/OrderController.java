@@ -125,7 +125,19 @@ public class OrderController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
-    @GetMapping("/all") /*checked success*/
+    @GetMapping("/all")
+    public ResponseEntity<?> getAll() {
+        List<Order> orders = orderService.getAll();
+        List<OrderResponse> orderResponses = orders.stream().map(this::orderToOrderResponse).toList();
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .success(true)
+                .content(orderResponses)
+                .build();
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @GetMapping("/all-page") /*checked success*/
     public ResponseEntity<?> getAllOrders(
             @RequestParam(name = "size", defaultValue = PAGE_SIZE) Integer size,
             @RequestParam(name = "number", defaultValue = PAGE_NUMBER) Integer number,

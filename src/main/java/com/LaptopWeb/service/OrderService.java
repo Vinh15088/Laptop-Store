@@ -51,6 +51,9 @@ public class OrderService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private CartService cartService;
+
     private void sendOrderConfirmationEmail(Order order) {
         EmailDetails emailDetails = new EmailDetails();
         emailDetails.setRecipient(order.getUser().getEmail());
@@ -124,6 +127,10 @@ public class OrderService {
                     orderDetail.setUnitPrice(Math.toIntExact(product.getCost()));
                     orderDetail.setTotalPrice((int) (product.getCost() * detailRequest.getQuantity()));
 
+                    int quantity = -detailRequest.getQuantity();
+
+                    productService.addProductStock(product.getId(), quantity);
+
                     return orderDetail;
                 }
         ).toList();
@@ -138,6 +145,8 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
 
         Order savedOrder = orderRepository.save(order);
+
+        cartService.deleteAllProductByUsername(user.getUsername());
 
         sendOrderConfirmationEmail(savedOrder);
 
@@ -164,6 +173,11 @@ public class OrderService {
     @PreAuthorize("#username == principal.claims['data']['username']")
     public List<Order> getMyOrder(String username) {
         return orderRepository.getAllOrderByUser(username);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Order> getAll() {
+        return orderRepository.findAll();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
