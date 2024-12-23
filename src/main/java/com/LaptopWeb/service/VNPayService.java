@@ -177,7 +177,6 @@ public class VNPayService {
 
                 log.info(orderCode);
 
-
                 if(orderService.existsOrderByOrderCodeAndTransactionId(orderCode, vnp_TxnRef)) {
 
                     Order order = orderService.getOrderByOrderCode(orderCode);
